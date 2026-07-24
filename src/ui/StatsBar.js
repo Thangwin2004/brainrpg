@@ -53,6 +53,7 @@ export class StatsBar extends Container {
     this.rollbackBadgeBg = new Graphics()
       .circle(0, 0, 9)
       .fill({ color: 0xE53935 });
+    this.rollbackBadgeBg.eventMode = 'none'; // Pass clicks through to button
     this.addChild(this.rollbackBadgeBg);
 
     this.rollbackBadgeText = new Text({
@@ -66,6 +67,7 @@ export class StatsBar extends Container {
     });
     this.rollbackBadgeText.anchor.set(0.5);
     this.rollbackBadgeText.scale.set(0.5);
+    this.rollbackBadgeText.eventMode = 'none'; // Pass clicks through to button
     this.addChild(this.rollbackBadgeText);
 
     // ═══════════════════════════════════════
@@ -110,8 +112,9 @@ export class StatsBar extends Container {
    * Call this from GameScene.resize(w, h).
    */
   resize(width, height = 0) {
+    const isLandscape = width > height;
     const pad = this._pad;
-    const gap = Math.max(12, height * 0.025); // Dynamic gap to stretch layout downwards
+    const gap = isLandscape ? 12 : Math.max(12, height * 0.025); // Dynamic gap on mobile, tight on desktop
     const pillH = this._pillH;
     const pillR = this._pillR;
 

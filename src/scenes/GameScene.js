@@ -73,8 +73,9 @@ export class GameScene extends Container {
       drawSparkle(width * 0.25, height * 0.65, 4, 0.2);
     } // End if (this.bg)
     
+    const isLandscape = width > height;
     // 1. Determine safe top margin (Push down from the very top of the screen)
-    const topMargin = Math.max(32, height * 0.05);
+    const topMargin = isLandscape ? 20 : Math.max(32, height * 0.05);
     
     if (this.statsBar) {
       this.statsBar.resize(width, height);
@@ -85,9 +86,11 @@ export class GameScene extends Container {
     if (this.gridSize) {
       const headerH = (this.statsBar ? this.statsBar.totalHeight : 100) + topMargin;
       const sidePad = Math.max(12, width * 0.04); // 92% width max
-      const bottomPad = 20; 
+      // Subtract gap from availH to avoid pushing into bottom padding
+      const gap = isLandscape ? 16 : Math.max(24, height * 0.04);
+      const bottomPad = isLandscape ? 40 : 20; 
       
-      const availH = height - headerH - bottomPad;
+      const availH = height - headerH - gap - bottomPad;
       const gridTotalW = this.baseCellSize * this.gridSize + 20; 
       // Giữ khoảng hở 2 bên (sidePad) để không bị tràn màn hình
       const maxGridPx = Math.min(width - sidePad * 2, availH);
@@ -98,7 +101,6 @@ export class GameScene extends Container {
       this.gridContainer.scale.set(scale);
       
       // Push board down with a proportional gap so it doesn't look squished on tall phones
-      const gap = Math.max(24, height * 0.04);
       const gridY = headerH + gap + scaledGridSize / 2;
       
       this.gridContainer.position.set(width / 2, gridY);
