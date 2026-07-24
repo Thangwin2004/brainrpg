@@ -14,8 +14,8 @@ export class Player extends Container {
     // Highlight Frame — Lavender (Lumina Play)
     this.frame = new Graphics()
       .roundRect(-32, -32, 64, 64, 14)
-      .fill({ color: 0x7E57C2, alpha: 0.12 })
-      .stroke({ color: 0x7E57C2, width: 3 });
+      .fill({ color: 0x7E57C2, alpha: 0.3 })
+      .stroke({ color: 0xFFFFFF, width: 3 });
     this.addChild(this.frame);
     
     // Visuals

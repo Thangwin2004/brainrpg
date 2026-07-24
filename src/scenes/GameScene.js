@@ -47,27 +47,61 @@ export class GameScene extends Container {
   }
   
   resize(width, height) {
-    if (this.statsBar) this.statsBar.resize(width);
-    
     // Resize background
     if (this.bg) {
       const bgGrad = new FillGradient(0, 0, 0, height);
       bgGrad.addColorStop(0, '#B39DDB');
       bgGrad.addColorStop(1, '#7E57C2');
       this.bg.clear().rect(0, 0, width, height).fill(bgGrad);
+
+      this.bg.circle(width * 0.15, height * 0.85, 120).fill({ color: 0xffffff, alpha: 0.05 });
+      this.bg.circle(width * 0.85, height * 0.95, 180).fill({ color: 0xffffff, alpha: 0.04 });
+      this.bg.circle(width * 0.5, height * 1.1, 160).fill({ color: 0xffffff, alpha: 0.06 });
+      
+      // Sparkles (4-pointed stars)
+      const drawSparkle = (x, y, s, alpha) => {
+        this.bg.moveTo(x, y - s)
+               .quadraticCurveTo(x, y, x + s, y)
+               .quadraticCurveTo(x, y, x, y + s)
+               .quadraticCurveTo(x, y, x - s, y)
+               .quadraticCurveTo(x, y, x, y - s)
+               .fill({ color: 0xffffff, alpha });
+      };
+      drawSparkle(width * 0.1, height * 0.2, 5, 0.4);
+      drawSparkle(width * 0.85, height * 0.15, 4, 0.3);
+      drawSparkle(width * 0.7, height * 0.5, 6, 0.5);
+      drawSparkle(width * 0.25, height * 0.65, 4, 0.2);
+    } // End if (this.bg)
+    
+    // 1. Determine safe top margin (Push down from the very top of the screen)
+    const topMargin = Math.max(32, height * 0.05);
+    
+    if (this.statsBar) {
+      this.statsBar.resize(width, height);
+      this.statsBar.position.y = topMargin;
     }
     
-    // Reposition and scale gridContainer
+    // 2. Reposition and scale gridContainer
     if (this.gridSize) {
-      const headerH = this.statsBar ? this.statsBar.totalHeight : 100;
-      const availH = height - headerH - 10;
-      const maxGridPx = Math.min(width - 40, availH);
+      const headerH = (this.statsBar ? this.statsBar.totalHeight : 100) + topMargin;
+      const sidePad = Math.max(12, width * 0.04); // 92% width max
+      const bottomPad = 20; 
       
-      const gridW = this.baseCellSize * this.gridSize;
-      const scale = maxGridPx / gridW;
+      const availH = height - headerH - bottomPad;
+      const gridTotalW = this.baseCellSize * this.gridSize + 20; 
+      // Giữ khoảng hở 2 bên (sidePad) để không bị tràn màn hình
+      const maxGridPx = Math.min(width - sidePad * 2, availH);
+      
+      const scale = maxGridPx / gridTotalW;
+      const scaledGridSize = gridTotalW * scale;
       
       this.gridContainer.scale.set(scale);
-      this.gridContainer.position.set(width / 2, headerH + availH / 2);
+      
+      // Push board down with a proportional gap so it doesn't look squished on tall phones
+      const gap = Math.max(24, height * 0.04);
+      const gridY = headerH + gap + scaledGridSize / 2;
+      
+      this.gridContainer.position.set(width / 2, gridY);
     }
     
     if (this.settingsModal) {
@@ -259,9 +293,15 @@ export class GameScene extends Container {
     
     // === 3. DRAW GRID & PLACE ENTITIES ===
     // Draw Grid Card
+    const frameShadow = new Graphics()
+      .roundRect(this.gridOffsetX - 10, this.gridOffsetY - 5, gridW + 20, gridW + 20, 24)
+      .fill({ color: 0x000000, alpha: 0.1 });
+    this.gridContainer.addChild(frameShadow);
+      
     const outerFrame = new Graphics()
       .roundRect(this.gridOffsetX - 10, this.gridOffsetY - 10, gridW + 20, gridW + 20, 24)
-      .fill({ color: 0xFFFFFF, alpha: 0.95 });
+      .fill({ color: 0xFFFFFF, alpha: 1 })
+      .stroke({ color: 0xF3E5F5, width: 3 }); // bright highlight border
     this.gridContainer.addChild(outerFrame);
 
     // Draw Grid Cells
@@ -269,17 +309,17 @@ export class GameScene extends Container {
       for(let c = 0; c < this.gridSize; c++) {
         const cell = new Graphics();
         if (this.walls[r][c]) {
-           cell.roundRect(0, 0, this.cellSize - 4, this.cellSize - 4, 12)
+           cell.roundRect(0, 0, this.cellSize - 4, this.cellSize - 4, 14)
                .fill({ color: 0xE8E8E8 })
                .stroke({ color: 0xCBC4D0, width: 1 });
         } else {
-           cell.roundRect(0, 0, this.cellSize - 4, this.cellSize - 4, 12)
-               .fill({ color: 0xF3F3F4 })
+            // Check if boss cell for custom fill color
+            const isBossCell = (r === bossCell.y && c === bossCell.x);
+            const cellColor = isBossCell ? 0xFFF3E0 : 0xF3F3F4; // warm pastel orange for boss
+
+           cell.roundRect(0, 0, this.cellSize - 4, this.cellSize - 4, 14)
+               .fill({ color: cellColor })
                .stroke({ color: 0xCBC4D0, width: 1 });
-            
-            if (r === bossCell.y && c === bossCell.x) {
-                cell.stroke({ color: 0xFF8A80, width: 3 });
-            }
         }
         cell.position.set(this.gridOffsetX + c * this.cellSize + 2, this.gridOffsetY + r * this.cellSize + 2);
         this.gridContainer.addChild(cell);

@@ -6,8 +6,8 @@ export class StatsBar extends Container {
     super();
 
     // ── Shared style constants ──
-    this._pad = 12;      // horizontal edge padding
-    this._gap = 8;       // gap between row 1 and row 2
+    this._pad = 16;      // increased safe area
+    this._gap = 6;       // reduced gap for tighter header
     this._pillH = 44;    // pill height for both rows
     this._pillR = 22;    // pill border-radius
     this._btnSize = 24;  // icon button size
@@ -73,31 +73,26 @@ export class StatsBar extends Container {
     // ═══════════════════════════════════════
     this.powerContainer = new Container();
 
+    this.powerShadow = new Graphics();
+    this.powerContainer.addChild(this.powerShadow);
+
     this.powerBg = new Graphics();
     this.powerContainer.addChild(this.powerBg);
 
     // Group icon + text together for easy centering
     this.powerGroup = new Container();
 
-    const lightningSvg = `<svg viewBox="0 0 24 24" width="24" height="24"><path fill="#7E57C2" d="M7 2v11h3v9l7-12h-4l4-8z"/></svg>`;
-    this.lightningIcon = new Graphics().svg(lightningSvg);
-    this.lightningIcon.pivot.set(12, 12);
-    this.lightningIcon.scale.set(1.3);
-    this.lightningIcon.position.set(0, 0);
-    this.powerGroup.addChild(this.lightningIcon);
-
     this.powerText = new Text({
-      text: "NĂNG LƯỢNG: 10",
+      text: "⚡ 10",
       style: new TextStyle({
         fontFamily: "'Quicksand', 'Be Vietnam Pro', sans-serif",
         fill: 0x453268,
-        fontSize: 20,
-        fontWeight: '700',
+        fontSize: 24,
+        fontWeight: '900',
         letterSpacing: 1
       })
     });
-    this.powerText.anchor.set(0, 0.5);
-    this.powerText.position.set(18, 0);
+    this.powerText.anchor.set(0.5);
     this.powerGroup.addChild(this.powerText);
 
     this.powerContainer.addChild(this.powerGroup);
@@ -111,12 +106,12 @@ export class StatsBar extends Container {
   }
 
   /**
-   * Recalculate all positions based on current screen width.
+   * Recalculate all positions based on current screen width and height.
    * Call this from GameScene.resize(w, h).
    */
-  resize(width) {
+  resize(width, height = 0) {
     const pad = this._pad;
-    const gap = this._gap;
+    const gap = Math.max(12, height * 0.025); // Dynamic gap to stretch layout downwards
     const pillH = this._pillH;
     const pillR = this._pillR;
 
@@ -125,22 +120,22 @@ export class StatsBar extends Container {
     const row1CenterY = row1Y + pillH / 2;
 
     // Floor pill — left
-    const floorW = 130;
+    const floorW = 100;
     this.floorBg.clear()
       .roundRect(0, 0, floorW, pillH, pillR)
-      .fill({ color: 0xffffff, alpha: 0.85 });
+      .fill({ color: 0xffffff, alpha: 0.95 });
     this.floorContainer.position.set(pad, row1Y);
     this.floorText.position.set(floorW / 2, pillH / 2);
 
     // Settings button — right edge
-    this.settingsBtn.position.set(width - pad - 20, row1CenterY);
+    this.settingsBtn.position.set(width - pad - this._btnSize, row1CenterY);
 
     // Rollback button — to the left of settings
-    this.rollbackBtn.position.set(width - pad - 20 - 55, row1CenterY);
+    this.rollbackBtn.position.set(width - pad - this._btnSize * 3 - 8, row1CenterY);
 
     // Badge — top-right of rollback button
-    const badgeX = width - pad - 20 - 55 + 20;
-    const badgeY = row1CenterY - 20;
+    const badgeX = width - pad - this._btnSize * 3 - 8 + 18;
+    const badgeY = row1CenterY - 18;
     this.rollbackBadgeBg.position.set(badgeX, badgeY);
     this.rollbackBadgeText.position.set(badgeX, badgeY);
 
@@ -148,14 +143,18 @@ export class StatsBar extends Container {
     const row2Y = row1Y + pillH + gap;
     const row2CenterY = row2Y + pillH / 2;
 
-    // Power pill — centered, width adapts to screen
-    const powerW = Math.min(width - pad * 2, 300);
+    // Power pill — centered, width adapts to screen, slightly thicker
+    const powerW = 180;
+    this.powerShadow.clear()
+      .roundRect(-powerW / 2, -pillH / 2 + 4, powerW, pillH, pillR)
+      .fill({ color: 0x000000, alpha: 0.1 });
+    
     this.powerBg.clear()
       .roundRect(-powerW / 2, -pillH / 2, powerW, pillH, pillR)
-      .fill({ color: 0xffffff, alpha: 0.85 });
+      .fill({ color: 0xffffff, alpha: 1 })
+      .stroke({ width: 3, color: 0xFFCA28 }); // bold gold stroke
+      
     this.powerContainer.position.set(width / 2, row2CenterY);
-
-    // Center icon+text group inside pill
     this.powerGroup.position.set(0, 0);
 
     // ── Report total height ──
@@ -164,11 +163,7 @@ export class StatsBar extends Container {
 
   updateStats(floor, power) {
     this.floorText.text = `TẦNG ${floor}`;
-    this.powerText.text = `NĂNG LƯỢNG: ${power}`;
-
-    // Re-center group dynamically based on text width
-    const groupW = 18 + this.powerText.width; // icon gap + text
-    this.powerGroup.position.x = -groupW / 2;
+    this.powerText.text = `⚡ ${power}`;
   }
 
   forceUpdateRollbacks(count, canRollback) {
@@ -183,10 +178,14 @@ export class StatsBar extends Container {
     // Enable/disable button
     if (canRollback) {
       this.rollbackBtn.alpha = 1;
-      this.rollbackBtn.interactive = true;
+      this.rollbackBadgeBg.alpha = 1;
+      this.rollbackBadgeText.alpha = 1;
+      this.rollbackBtn.eventMode = 'static';
     } else {
       this.rollbackBtn.alpha = 0.5;
-      this.rollbackBtn.interactive = false;
+      this.rollbackBadgeBg.alpha = 0.5;
+      this.rollbackBadgeText.alpha = 0.5;
+      this.rollbackBtn.eventMode = 'none';
     }
   }
 }

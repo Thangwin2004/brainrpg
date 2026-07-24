@@ -25,21 +25,7 @@ export class Monster extends Container {
     }
     this.sprite.scale.set(scaleVal);
     
-    // Boss Aura
-    if (this.isBoss) {
-      this.aura = new Graphics()
-        .circle(0, 0, 45)
-        .fill({ color: 0xFF8A80, alpha: 0.2 });
-      this.addChild(this.aura);
-      
-      gsap.to(this.aura.scale, {
-        x: 1.2,
-        y: 1.2,
-        duration: 1,
-        yoyo: true,
-        repeat: -1
-      });
-    }
+    // Boss aura removed in favor of colored grid cell (GameScene)
 
     this.addChild(this.sprite);
     

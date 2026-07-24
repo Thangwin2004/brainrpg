@@ -37,7 +37,8 @@ export class Game {
 
   onResize() {
     if (this.currentScene && typeof this.currentScene.resize === 'function') {
-      this.currentScene.resize(this.app.screen.width, this.app.screen.height);
+      // Use window inner dimensions directly to avoid race condition with PixiJS app.screen updating
+      this.currentScene.resize(window.innerWidth, window.innerHeight);
     }
   }
 
@@ -55,6 +56,8 @@ export class Game {
       if (this.currentScene.init) {
         this.currentScene.init(this);
       }
+      // Force an immediate resize to ensure layout is perfect on load
+      this.onResize();
     }
   }
 
