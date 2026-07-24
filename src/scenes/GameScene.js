@@ -59,7 +59,7 @@ export class GameScene extends Container {
     
     // Reposition and scale gridContainer
     if (this.gridSize) {
-      const headerH = 70;
+      const headerH = 140;
       const availH = height - headerH - 20;
       const maxGridPx = Math.min(width - 40, availH);
       
