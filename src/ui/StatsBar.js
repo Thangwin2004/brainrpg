@@ -33,7 +33,7 @@ export class StatsBar extends Container {
     // 2. Power Pill — White capsule with lavender icon
     this.powerContainer = new Container();
     const powerW = Math.max(240, Math.min(width * 0.55, 270));
-    this.powerContainer.position.set(width / 2, 82);
+    this.powerContainer.position.set(width / 2, 17); // Aligned with other header elements
 
     this.powerBg = new Graphics()
       .roundRect(-powerW / 2, 0, powerW, 50, 25)
@@ -116,7 +116,7 @@ export class StatsBar extends Container {
   resize(width) {
     // 1. Power Pill
     const powerW = Math.max(240, Math.min(width * 0.55, 270));
-    this.powerContainer.position.set(width / 2, 82);
+    this.powerContainer.position.set(width / 2, 17);
     
     this.powerBg.clear()
       .roundRect(-powerW / 2, 0, powerW, 50, 25)
