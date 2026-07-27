@@ -1,4 +1,4 @@
-import { Container, Graphics, FillGradient } from 'pixi.js';
+import { Container, Graphics, FillGradient, Sprite, Assets, ColorMatrixFilter, BlurFilter } from 'pixi.js';
 import { Player } from '../entities/Player.js';
 import { Monster } from '../entities/Monster.js';
 import { Item } from '../entities/Item.js';
@@ -15,13 +15,26 @@ export class GameScene extends Container {
     this.game = game;
     const { width, height } = game.app.screen;
     
-    // Background — Lumina Play Lavender Gradient
-    const bgGrad = new FillGradient(0, 0, 0, height);
-    bgGrad.addColorStop(0, '#B39DDB');
-    bgGrad.addColorStop(1, '#7E57C2');
+    // Background — Tribal Tower Interior
+    this.bgContainer = new Container();
+    this.addChild(this.bgContainer);
     
-    this.bg = new Graphics().rect(0, 0, width, height).fill(bgGrad);
-    this.addChild(this.bg);
+    // 1. Blurred Background System
+    this.bgBlurredImage = new Sprite(Assets.get('bg_game'));
+    this.bgBlurredImage.anchor.set(0.5);
+    this.bgBlurredImage.filters = [new BlurFilter(15)];
+    this.bgBlurredImage.tint = 0x888888;
+    this.bgContainer.addChild(this.bgBlurredImage);
+
+    // 2. Main Background System
+    this.bgImage = new Sprite(Assets.get('bg_game'));
+    this.bgImage.anchor.set(0.5);
+    this.bgContainer.addChild(this.bgImage);
+    
+    // Filter to change colors based on floor
+    this.bgFilter = new ColorMatrixFilter();
+    // Apply filter to container so both blur and main image get colorized
+    this.bgContainer.filters = [this.bgFilter];
     
     // Game State
     this.floor = 1;
@@ -47,31 +60,21 @@ export class GameScene extends Container {
   }
   
   resize(width, height) {
-    // Resize background
-    if (this.bg) {
-      const bgGrad = new FillGradient(0, 0, 0, height);
-      bgGrad.addColorStop(0, '#B39DDB');
-      bgGrad.addColorStop(1, '#7E57C2');
-      this.bg.clear().rect(0, 0, width, height).fill(bgGrad);
-
-      this.bg.circle(width * 0.15, height * 0.85, 120).fill({ color: 0xffffff, alpha: 0.05 });
-      this.bg.circle(width * 0.85, height * 0.95, 180).fill({ color: 0xffffff, alpha: 0.04 });
-      this.bg.circle(width * 0.5, height * 1.1, 160).fill({ color: 0xffffff, alpha: 0.06 });
-      
-      // Sparkles (4-pointed stars)
-      const drawSparkle = (x, y, s, alpha) => {
-        this.bg.moveTo(x, y - s)
-               .quadraticCurveTo(x, y, x + s, y)
-               .quadraticCurveTo(x, y, x, y + s)
-               .quadraticCurveTo(x, y, x - s, y)
-               .quadraticCurveTo(x, y, x, y - s)
-               .fill({ color: 0xffffff, alpha });
-      };
-      drawSparkle(width * 0.1, height * 0.2, 5, 0.4);
-      drawSparkle(width * 0.85, height * 0.15, 4, 0.3);
-      drawSparkle(width * 0.7, height * 0.5, 6, 0.5);
-      drawSparkle(width * 0.25, height * 0.65, 4, 0.2);
-    } // End if (this.bg)
+    // Resize Blurred background (Always Cover)
+    if (this.bgBlurredImage && this.bgBlurredImage.texture) {
+        this.bgBlurredImage.position.set(width / 2, height / 2);
+        this.bgBlurredImage.scale.set(Math.max(width / this.bgBlurredImage.texture.width, height / this.bgBlurredImage.texture.height));
+    }
+    
+    // Resize Main background (Contain on PC, Cover on Mobile)
+    if (this.bgImage && this.bgImage.texture) {
+        const isLandscape = width > height;
+        const scale = isLandscape 
+            ? Math.min(width / this.bgImage.texture.width, height / this.bgImage.texture.height)
+            : Math.max(width / this.bgImage.texture.width, height / this.bgImage.texture.height);
+        this.bgImage.position.set(width / 2, height / 2);
+        this.bgImage.scale.set(scale);
+    }
     
     const isLandscape = width > height;
     // 1. Determine safe top margin (Push down from the very top of the screen)
@@ -85,23 +88,35 @@ export class GameScene extends Container {
     // 2. Reposition and scale gridContainer
     if (this.gridSize) {
       const headerH = (this.statsBar ? this.statsBar.totalHeight : 100) + topMargin;
-      const sidePad = Math.max(12, width * 0.04); // 92% width max
-      // Subtract gap from availH to avoid pushing into bottom padding
       const gap = isLandscape ? 16 : Math.max(24, height * 0.04);
       const bottomPad = isLandscape ? 40 : 20; 
-      
       const availH = height - headerH - gap - bottomPad;
+      
+      let maxGridPx;
+      if (isLandscape) {
+          const bgW = this.bgImage.texture.width * this.bgImage.scale.x;
+          const sidePad = Math.max(12, bgW * 0.04);
+          maxGridPx = Math.min(bgW - sidePad * 2, availH);
+      } else {
+          const sidePad = Math.max(12, width * 0.04);
+          maxGridPx = Math.min(width - sidePad * 2, availH);
+      }
+      
       const gridTotalW = this.baseCellSize * this.gridSize + 20; 
-      // Giữ khoảng hở 2 bên (sidePad) để không bị tràn màn hình
-      const maxGridPx = Math.min(width - sidePad * 2, availH);
       
       const scale = maxGridPx / gridTotalW;
       const scaledGridSize = gridTotalW * scale;
       
       this.gridContainer.scale.set(scale);
       
-      // Push board down with a proportional gap so it doesn't look squished on tall phones
-      const gridY = headerH + gap + scaledGridSize / 2;
+      // Center the grid perfectly inside the background's dark portal
+      let gridY = height * 0.52;
+      
+      // Safety check to ensure it doesn't overlap the header on tiny/short screens
+      const minGridY = headerH + gap + scaledGridSize / 2;
+      if (gridY < minGridY) {
+          gridY = minGridY;
+      }
       
       this.gridContainer.position.set(width / 2, gridY);
     }
@@ -137,6 +152,7 @@ export class GameScene extends Container {
     
     // Apply immediate resize to layout gridContainer correctly on new floor
     this.resize(this.game.app.screen.width, this.game.app.screen.height);
+    this.updateBackgroundHue(floor);
     
     // === DIFFICULTY ===
     const difficulty = Math.min(floor, 20);
@@ -372,6 +388,41 @@ export class GameScene extends Container {
   nextFloor() {
       this.floor++;
       this.generateLevel(this.floor);
+  }
+  
+  updateBackgroundHue(floor) {
+      if (!this.bgFilter) return;
+      
+      this.bgFilter.reset();
+      
+      const themeIndex = Math.floor((floor - 1) / 5);
+      
+      switch (themeIndex % 4) {
+          case 0:
+              // Floor 1-5: Normal warm
+              this.bgFilter.hue(0, false); 
+              break;
+          case 1:
+              // Floor 6-10: Jungle/Greenish
+              this.bgFilter.hue(60, false); 
+              break;
+          case 2:
+              // Floor 11-15: Lava/Reddish
+              this.bgFilter.hue(-60, false);
+              break;
+          case 3:
+              // Floor 16-20: Dark Magic/Purple
+              this.bgFilter.hue(120, false);
+              break;
+      }
+      
+      // Boss floor
+      if (floor % 5 === 0) {
+          this.bgFilter.brightness(0.6, true);
+          this.bgFilter.contrast(1.2, true);
+      } else {
+          this.bgFilter.brightness(0.85, true); // slightly dim for readability
+      }
   }
   
   updateStatsUI() {

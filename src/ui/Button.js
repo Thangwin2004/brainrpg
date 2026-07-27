@@ -75,7 +75,7 @@ export class CapsuleBtn extends Container {
     const label = new Text({
       text: textStr,
       style: new TextStyle({
-        fontFamily: "'Be Vietnam Pro', sans-serif",
+        fontFamily: ['Be Vietnam Pro', 'sans-serif'],
         fontSize: 17,
         fontWeight: '900',
         fill: 0xFFFFFF,

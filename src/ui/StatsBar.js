@@ -1,4 +1,4 @@
-import { Container, Graphics, Text, TextStyle } from 'pixi.js';
+import { Container, Graphics, FillGradient, Text, TextStyle } from 'pixi.js';
 import { IconBtn } from './Button.js';
 
 export class StatsBar extends Container {
@@ -18,16 +18,17 @@ export class StatsBar extends Container {
 
     // 1a. Floor Pill
     this.floorContainer = new Container();
+    this.floorShadow = new Graphics();
     this.floorBg = new Graphics();
-    this.floorContainer.addChild(this.floorBg);
+    this.floorContainer.addChild(this.floorShadow, this.floorBg);
 
     this.floorText = new Text({
       text: "TẦNG 1",
       style: new TextStyle({
-        fontFamily: "'Quicksand', 'Be Vietnam Pro', sans-serif",
-        fill: 0x453268,
+        fontFamily: ['Quicksand', 'Be Vietnam Pro', 'sans-serif'],
+        fill: 0x311B92,
         fontSize: 18,
-        fontWeight: '700',
+        fontWeight: '900',
         letterSpacing: 0.5
       })
     });
@@ -35,18 +36,18 @@ export class StatsBar extends Container {
     this.floorContainer.addChild(this.floorText);
     this.addChild(this.floorContainer);
 
-    // 1b. Settings Button
-    const settingsSvg = `<svg viewBox="0 0 24 24" width="24" height="24"><path fill="#7E57C2" d="M19.14,12.94c0.04-0.3,0.06-0.61,0.06-0.94c0-0.32-0.02-0.64-0.06-0.94l2.03-1.58c0.18-0.14,0.23-0.41,0.12-0.61 l-1.92-3.32c-0.12-0.22-0.37-0.29-0.59-0.22l-2.39,0.96c-0.5-0.38-1.03-0.7-1.62-0.94L14.4,2.81c-0.04-0.24-0.24-0.41-0.48-0.41 h-3.84c-0.24,0-0.43,0.17-0.47,0.41L9.25,5.35C8.66,5.59,8.12,5.92,7.63,6.29L5.24,5.33c-0.22-0.08-0.47,0-0.59,0.22L2.73,8.87 C2.62,9.08,2.66,9.34,2.86,9.48l2.03,1.58C4.84,11.36,4.8,11.69,4.8,12s0.02,0.64,0.06,0.94l-2.03,1.58 c-0.18,0.14-0.23,0.41-0.12,0.61l1.92,3.32c0.12,0.22,0.37,0.29,0.59,0.22l2.39-0.96c0.5,0.38,1.03,0.7,1.62,0.94l0.36,2.54 c0.05,0.24,0.24,0.41,0.48,0.41h3.84c0.24,0,0.43-0.17,0.47-0.41l0.36-2.54c0.59-0.24,1.13-0.56,1.62-0.94l2.39,0.96 c0.22,0.08,0.47,0,0.59-0.22l1.92-3.32c0.12-0.22,0.07-0.49-0.12-0.61L19.14,12.94z M12,15.6c-1.98,0-3.6-1.62-3.6-3.6 s1.62-3.6,3.6-3.6s3.6,1.62,3.6,3.6S13.98,15.6,12,15.6z"/></svg>`;
+    // 1b. Settings Button (Soft Purple)
+    const settingsSvg = `<svg viewBox="0 0 24 24" width="24" height="24"><path fill="#ffffff" d="M19.14,12.94c0.04-0.3,0.06-0.61,0.06-0.94c0-0.32-0.02-0.64-0.06-0.94l2.03-1.58c0.18-0.14,0.23-0.41,0.12-0.61 l-1.92-3.32c-0.12-0.22-0.37-0.29-0.59-0.22l-2.39,0.96c-0.5-0.38-1.03-0.7-1.62-0.94L14.4,2.81c-0.04-0.24-0.24-0.41-0.48-0.41 h-3.84c-0.24,0-0.43,0.17-0.47,0.41L9.25,5.35C8.66,5.59,8.12,5.92,7.63,6.29L5.24,5.33c-0.22-0.08-0.47,0-0.59,0.22L2.73,8.87 C2.62,9.08,2.66,9.34,2.86,9.48l2.03,1.58C4.84,11.36,4.8,11.69,4.8,12s0.02,0.64,0.06,0.94l-2.03,1.58 c-0.18,0.14-0.23,0.41-0.12,0.61l1.92,3.32c0.12,0.22,0.37,0.29,0.59,0.22l2.39-0.96c0.5,0.38,1.03,0.7,1.62,0.94l0.36,2.54 c0.05,0.24,0.24,0.41,0.48,0.41h3.84c0.24,0,0.43-0.17,0.47-0.41l0.36-2.54c0.59-0.24,1.13-0.56,1.62-0.94l2.39,0.96 c0.22,0.08,0.47,0,0.59-0.22l1.92-3.32c0.12-0.22,0.07-0.49-0.12-0.61L19.14,12.94z M12,15.6c-1.98,0-3.6-1.62-3.6-3.6 s1.62-3.6,3.6-3.6s3.6,1.62,3.6,3.6S13.98,15.6,12,15.6z"/></svg>`;
     this.settingsBtn = new IconBtn(settingsSvg, () => {
       if (onOpenSettings) onOpenSettings();
-    }, this._btnSize, '#EDE7F6', '#D1C4E9', '#B39DDB');
+    }, this._btnSize, '#D1C4E9', '#B39DDB', '#9575CD');
     this.addChild(this.settingsBtn);
 
-    // 1c. Rollback Button
-    const undoSvg = `<svg viewBox="0 0 24 24" width="24" height="24"><path fill="#7E57C2" d="M12.5 8c-2.65 0-5.05.99-6.9 2.6L2 7v9h9l-3.62-3.62c1.39-1.16 3.16-1.88 5.12-1.88 3.54 0 6.55 2.31 7.6 5.5l2.37-.78C20.89 11.12 17.03 8 12.5 8z"/></svg>`;
+    // 1c. Rollback Button (Soft Purple)
+    const undoSvg = `<svg viewBox="0 0 24 24" width="24" height="24"><path fill="#ffffff" d="M12.5 8c-2.65 0-5.05.99-6.9 2.6L2 7v9h9l-3.62-3.62c1.39-1.16 3.16-1.88 5.12-1.88 3.54 0 6.55 2.31 7.6 5.5l2.37-.78C20.89 11.12 17.03 8 12.5 8z"/></svg>`;
     this.rollbackBtn = new IconBtn(undoSvg, () => {
       if (this.onRollback) this.onRollback();
-    }, this._btnSize, '#EDE7F6', '#D1C4E9', '#B39DDB');
+    }, this._btnSize, '#D1C4E9', '#B39DDB', '#9575CD');
     this.addChild(this.rollbackBtn);
 
     // 1d. Rollback Badge
@@ -59,7 +60,7 @@ export class StatsBar extends Container {
     this.rollbackBadgeText = new Text({
       text: '3',
       style: new TextStyle({
-        fontFamily: "'Quicksand', 'Be Vietnam Pro', sans-serif",
+        fontFamily: ['Quicksand', 'Be Vietnam Pro', 'sans-serif'],
         fill: 0xffffff,
         fontSize: 22,
         fontWeight: '700'
@@ -87,8 +88,8 @@ export class StatsBar extends Container {
     this.powerText = new Text({
       text: "⚡ 10",
       style: new TextStyle({
-        fontFamily: "'Quicksand', 'Be Vietnam Pro', sans-serif",
-        fill: 0x453268,
+        fontFamily: ['Quicksand', 'Be Vietnam Pro', 'sans-serif'],
+        fill: 0x311B92,
         fontSize: 24,
         fontWeight: '900',
         letterSpacing: 1
@@ -124,9 +125,15 @@ export class StatsBar extends Container {
 
     // Floor pill — left
     const floorW = 100;
+    this.floorShadow.clear()
+      .roundRect(0, 4, floorW, pillH, pillR)
+      .fill({ color: 0x000000, alpha: 0.1 });
+
     this.floorBg.clear()
       .roundRect(0, 0, floorW, pillH, pillR)
-      .fill({ color: 0xffffff, alpha: 0.95 });
+      .fill({ color: 0xFBFAF5 })
+      .stroke({ width: 3, color: 0xB39DDB });
+
     this.floorContainer.position.set(pad, row1Y);
     this.floorText.position.set(floorW / 2, pillH / 2);
 
@@ -149,13 +156,13 @@ export class StatsBar extends Container {
     // Power pill — centered, width adapts to screen, slightly thicker
     const powerW = 180;
     this.powerShadow.clear()
-      .roundRect(-powerW / 2, -pillH / 2 + 4, powerW, pillH, pillR)
+      .roundRect(-powerW / 2, -pillH / 2 + 5, powerW, pillH, pillR)
       .fill({ color: 0x000000, alpha: 0.1 });
     
     this.powerBg.clear()
       .roundRect(-powerW / 2, -pillH / 2, powerW, pillH, pillR)
-      .fill({ color: 0xffffff, alpha: 1 })
-      .stroke({ width: 3, color: 0xFFCA28 }); // bold gold stroke
+      .fill({ color: 0xFBFAF5 })
+      .stroke({ width: 3, color: 0xFFCA28 }); // warm gold stroke
       
     this.powerContainer.position.set(width / 2, row2CenterY);
     this.powerGroup.position.set(0, 0);

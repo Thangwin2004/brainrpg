@@ -8,13 +8,12 @@ export class Game {
   }
 
   async init() {
-    // 1. Initialize PixiJS Application
     await this.app.init({
-      resizeTo: window,
       autoDensity: true,
       resolution: Math.max(window.devicePixelRatio, 2),
       backgroundColor: 0x1a1a2e, // Dark deep blue/purple base
-      preference: 'webgl'
+      preference: 'webgl',
+      resizeTo: window
     });
 
     document.getElementById('game-container').appendChild(this.app.canvas);
@@ -37,7 +36,6 @@ export class Game {
 
   onResize() {
     if (this.currentScene && typeof this.currentScene.resize === 'function') {
-      // Use window inner dimensions directly to avoid race condition with PixiJS app.screen updating
       this.currentScene.resize(window.innerWidth, window.innerHeight);
     }
   }

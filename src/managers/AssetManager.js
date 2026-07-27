@@ -75,12 +75,19 @@ export class AssetManager {
             alias: file,
             src: `/assets/image/items/${file}`
           }))
+        },
+        {
+          name: 'backgrounds',
+          assets: [
+            { alias: 'bg_menu', src: '/assets/image/backgrounds/bg_menu.png' },
+            { alias: 'bg_game', src: '/assets/image/backgrounds/bg_game.png' }
+          ]
         }
       ]
     };
     
     await Assets.init({ manifest });
-    await Assets.loadBundle(['avatars', 'items'], onProgress);
+    await Assets.loadBundle(['avatars', 'items', 'backgrounds'], onProgress);
     
     // Initialize audio system and preload SFX buffers
     AudioManager.init();
