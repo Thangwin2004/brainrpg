@@ -21,7 +21,7 @@ export class Player extends Container {
     // Visuals
     const texture = AssetManager.getPlayerTexture();
     this.sprite = new Sprite(texture);
-    this.sprite.anchor.set(0.5);
+    this.sprite.anchor.set(0.5, 0.7);
     
     // Scale avatar to fit nicely in grid cells
     const baseSize = Math.max(texture.width, texture.height);
@@ -30,7 +30,7 @@ export class Player extends Container {
     
     // Drop shadow
     this.shadow = new Graphics()
-      .ellipse(0, 28, 20, 6)
+      .ellipse(0, 20, 20, 6)
       .fill({ color: 0x000000, alpha: 0.2 });
     this.addChildAt(this.shadow, 1);
 
@@ -108,7 +108,6 @@ export class Player extends Container {
     setTimeout(() => {
       if (!this.destroyed) this.sprite.tint = 0xffffff;
     }, 150);
-    
     // Screen shake or wobble
     gsap.to(this.sprite, {
       y: -15,
@@ -120,9 +119,59 @@ export class Player extends Container {
       }
     });
     
-    this.showFloatingText(`+${amount}`, 0x00ff00);
+    this.showFloatingText(amount > 0 ? `+${amount}` : `${amount}`, amount > 0 ? 0x00ff00 : 0xff0000);
   }
   
+  multiplyPower(amount) {
+    this.power = Math.floor(this.power * amount);
+    this.updatePowerBadge();
+    
+    // Flash gold
+    this.sprite.tint = 0xFFD700;
+    setTimeout(() => {
+      if (!this.destroyed) this.sprite.tint = 0xffffff;
+    }, 150);
+    
+    gsap.to(this.sprite, {
+      y: -20,
+      scale: 1.2,
+      yoyo: true,
+      repeat: 1,
+      duration: 0.15,
+      onComplete: () => {
+        if (!this.destroyed) {
+            this.sprite.y = 0;
+            const baseSize = Math.max(AssetManager.getPlayerTexture().width, AssetManager.getPlayerTexture().height);
+            this.sprite.scale.set(58 / baseSize);
+        }
+      }
+    });
+    
+    this.showFloatingText(`x${amount}`, 0xFFD700);
+  }
+
+  dividePower(amount) {
+    this.power = Math.floor(this.power / amount);
+    this.updatePowerBadge();
+    
+    // Flash purple (poison)
+    this.sprite.tint = 0x9C27B0;
+    setTimeout(() => {
+      if (!this.destroyed) this.sprite.tint = 0xffffff;
+    }, 150);
+    
+    gsap.to(this.sprite, {
+      y: 10, // sink down
+      yoyo: true,
+      repeat: 1,
+      duration: 0.1,
+      onComplete: () => {
+        if (!this.destroyed) this.sprite.y = 0;
+      }
+    });
+    
+    this.showFloatingText(`/${amount}`, 0x9C27B0);
+  }
   spendPower(amount) {
     this.power -= amount;
     this.updatePowerBadge();

@@ -1,4 +1,4 @@
-import { Container, Graphics, FillGradient, Text, TextStyle } from 'pixi.js';
+import { Container, Graphics, FillGradient, Text, TextStyle, BlurFilter } from 'pixi.js';
 import { AudioManager } from '../managers/AudioManager.js';
 import { IconBtn } from './Button.js';
 
@@ -9,6 +9,34 @@ export class SettingsModal extends Container {
         this.onRestart = onRestart;
         this.onHome = onHome;
         this.initUI();
+        
+        // Blur siblings when added to simulate backdrop-filter
+        this.on('added', () => {
+            if (this.parent) {
+                this.siblingFilters = new Map();
+                this.parent.children.forEach(child => {
+                    if (child !== this && !child.isBackdrop) {
+                        const filter = new BlurFilter({ strength: 5, quality: 3 });
+                        child.filters = child.filters ? [...child.filters, filter] : [filter];
+                        this.siblingFilters.set(child, filter);
+                    }
+                });
+            }
+        });
+
+        this.on('removed', () => {
+            if (this.siblingFilters) {
+                for (const [child, filter] of this.siblingFilters.entries()) {
+                    if (child.filters) {
+                        child.filters = child.filters.filter(f => f !== filter);
+                        if (child.filters.length === 0) child.filters = null;
+                    }
+                    filter.destroy();
+                }
+                this.siblingFilters.clear();
+                this.siblingFilters = null;
+            }
+        });
     }
     
     initUI() {

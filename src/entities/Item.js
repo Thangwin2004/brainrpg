@@ -15,7 +15,7 @@ export class Item extends Container {
     this.icon = new Container();
     
     // Soft halo background behind the food item
-    const haloColor = this.type === 'multiply' ? 0xFFB300 : 0x80CBC4;
+    const haloColor = this.type === 'multiply' ? 0xFFB300 : (this.type === 'divide' ? 0xAB47BC : 0x80CBC4);
     const halo = new Graphics()
       .circle(0, 0, 26)
       .fill({ color: haloColor, alpha: 0.2 });
@@ -24,22 +24,28 @@ export class Item extends Container {
     // Food / Drink Sprite (from master item assets)
     const texture = AssetManager.getRandomItemTexture();
     this.sprite = new Sprite(texture);
-    this.sprite.anchor.set(0.5);
+    this.sprite.anchor.set(0.5, 0.65);
     
     const baseSize = Math.max(texture.width, texture.height);
     this.sprite.scale.set(54 / baseSize);
+    if (this.type === 'divide') {
+        this.sprite.tint = 0x9C27B0; // Purple poison tint
+    }
     this.icon.addChild(this.sprite);
     
     this.addChild(this.icon);
     
     // Drop shadow under item
     this.shadow = new Graphics()
-      .ellipse(0, 28, 16, 5)
+      .ellipse(0, 20, 18, 5)
       .fill({ color: 0x000000, alpha: 0.25 });
     this.addChildAt(this.shadow, 0);
 
     // Power Badge (Top Right Pill - same style as monsters)
-    const badgeStr = this.type === 'multiply' ? `x${this.power}` : `+${this.power}`;
+    let badgeStr = `+${this.power}`;
+    if (this.type === 'multiply') badgeStr = `x${this.power}`;
+    if (this.type === 'divide') badgeStr = `/${this.power}`;
+    
     this.powerText = new Text({
       text: badgeStr,
       style: new TextStyle({

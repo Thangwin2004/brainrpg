@@ -15,12 +15,12 @@ export class Monster extends Container {
     // Visuals
     const texture = AssetManager.getRandomMonsterTexture();
     this.sprite = new Sprite(texture);
-    this.sprite.anchor.set(0.5);
+    this.sprite.anchor.set(0.5, 0.75);
     
     const baseSize = Math.max(texture.width, texture.height);
     let scaleVal = 65 / baseSize;
     if (this.isBoss) {
-      scaleVal *= 1.5; // Bosses are 50% larger
+      scaleVal *= 1.2; // Bosses are 50% larger
       this.sprite.tint = 0xffaaaa; // Slightly red tint for boss
     }
     this.sprite.scale.set(scaleVal);
@@ -31,7 +31,7 @@ export class Monster extends Container {
     
     // Drop shadow
     this.shadow = new Graphics()
-      .ellipse(0, this.isBoss ? 50 : 35, this.isBoss ? 30 : 20, this.isBoss ? 10 : 6)
+      .ellipse(0, this.isBoss ? 24 : 22, this.isBoss ? 24 : 20, this.isBoss ? 7 : 6)
       .fill({ color: 0x000000, alpha: 0.3 });
     this.addChildAt(this.shadow, 0);
     
@@ -59,6 +59,19 @@ export class Monster extends Container {
       yoyo: true,
       repeat: -1,
       ease: "sine.inOut"
+    });
+  }
+  updatePowerBadge() {
+    this.powerText.text = `${this.power}`;
+    const tw = Math.max(24, this.powerText.width + 10);
+    this.statsBg.clear()
+      .roundRect(30 - tw, -30, tw, 18, 9)
+      .fill({ color: this.isBoss ? 0xFF8A80 : 0x7E57C2, alpha: 0.9 });
+    this.powerText.position.set(30 - tw / 2, -21);
+    
+    // Add a small bump animation to the badge when updated
+    gsap.to(this.powerText.scale, {
+        x: 1.5, y: 1.5, duration: 0.1, yoyo: true, repeat: 1
     });
   }
   

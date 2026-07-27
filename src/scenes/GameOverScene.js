@@ -30,6 +30,7 @@ export class GameOverScene extends Container {
     this.bgImage = new Sprite(Assets.get('bg_gameover'));
     this.bgImage.anchor.set(0.5);
     this.bgImage.tint = 0x999999; // Slight dimming to make UI pop
+    this.bgImage.filters = [new BlurFilter({ strength: 5, quality: 3 })];
     this.bgContainer.addChild(this.bgImage);
 
     // Dynamic Particles (Fireflies/Spores)
@@ -69,14 +70,14 @@ export class GameOverScene extends Container {
       .fill({ color: 0x000000, alpha: 0.3 });
     this.modal.addChild(shadowBg);
 
-    // 2. Thick Wooden/Stone Border
+    // 2. Thick Soft Purple Border
     const borderGrad = new FillGradient(0, -cardH / 2, 0, cardH / 2);
-    borderGrad.addColorStop(0, 0x8D6E63);
-    borderGrad.addColorStop(1, 0x5D4037);
+    borderGrad.addColorStop(0, 0xD1C4E9);
+    borderGrad.addColorStop(1, 0xB39DDB);
 
     const borderBg = new Graphics()
       .roundRect(-cardW / 2, -cardH / 2 + 6, cardW, cardH, 20)
-      .fill({ color: 0x4E342E }) // Shadow Base
+      .fill({ color: 0x9575CD }) // Shadow Base
       .roundRect(-cardW / 2, -cardH / 2, cardW, cardH, 20)
       .fill(borderGrad);
     this.modal.addChild(borderBg);
@@ -87,19 +88,19 @@ export class GameOverScene extends Container {
       .fill({ color: 0xfbfaf5 });
     this.modal.addChild(cardFace);
 
-    // 4. Floating 3D Title Ribbon (Orange/Gold)
+    // 4. Floating 3D Title Ribbon (Purple)
     const ribbonW = 180;
     const ribbonH = 46;
     const ribbonY = -cardH / 2;
     const ribbonRadius = ribbonH / 2;
 
     const ribGrad = new FillGradient(0, ribbonY - ribbonH / 2, 0, ribbonY + ribbonH / 2);
-    ribGrad.addColorStop(0, 0xFFCA28);
-    ribGrad.addColorStop(1, 0xFF8F00);
+    ribGrad.addColorStop(0, 0x9575CD);
+    ribGrad.addColorStop(1, 0x7E57C2);
 
     const ribbon = new Graphics()
       .roundRect(-ribbonW / 2, ribbonY - ribbonH / 2 + 5, ribbonW, ribbonH, ribbonRadius)
-      .fill({ color: 0xE65100 }) // Ribbon shadow
+      .fill({ color: 0x512DA8 }) // Ribbon shadow
       .roundRect(-ribbonW / 2, ribbonY - ribbonH / 2, ribbonW, ribbonH, ribbonRadius)
       .fill(ribGrad)
       .stroke({ color: 0xffffff, width: 3.5 })
@@ -140,7 +141,7 @@ export class GameOverScene extends Container {
       style: new TextStyle({
         fontFamily: ['Be Vietnam Pro', 'sans-serif'],
         fontSize: 18,
-        fill: this.isNewRecord ? 0xE65100 : 0x5D4037,
+        fill: this.isNewRecord ? 0x7E57C2 : 0x4A148C,
         fontWeight: "800",
         align: 'center'
       })
@@ -155,7 +156,7 @@ export class GameOverScene extends Container {
       style: new TextStyle({
         fontFamily: ['Be Vietnam Pro', 'sans-serif'],
         fontSize: 64,
-        fill: 0xFF8F00,
+        fill: 0x7E57C2,
         fontWeight: "900"
       })
     });
@@ -187,7 +188,7 @@ export class GameOverScene extends Container {
       style: new TextStyle({
         fontFamily: ['Be Vietnam Pro', 'sans-serif'],
         fontSize: 14,
-        fill: 0x8D6E63,
+        fill: 0x9575CD,
         fontWeight: '800'
       })
     });
@@ -208,11 +209,11 @@ export class GameOverScene extends Container {
     homeBtn.position.set(-btnGap, btnY);
     this.modal.addChild(homeBtn);
 
-    // Replay Button — Orange
+    // Replay Button — Purple
     const replaySvg = `<svg viewBox="0 0 24 24" width="24" height="24"><path fill="#ffffff" d="M12 5V1L7 6l5 5V7c3.31 0 6 2.69 6 6s-2.69 6-6 6-6-2.69-6-6H4c0 4.42 3.58 8 8 8s8-3.58 8-8-3.58-8-8-8z"/></svg>`;
     const replayBtn = new IconBtn(replaySvg, () => {
       this.game.setScene(new GameScene());
-    }, btnSize, '#FFB74D', '#FF9800', '#F57C00');
+    }, btnSize, '#D1C4E9', '#B39DDB', '#9575CD');
     replayBtn.position.set(btnGap, btnY);
     this.modal.addChild(replayBtn);
 
