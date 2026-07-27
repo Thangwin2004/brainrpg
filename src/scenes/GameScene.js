@@ -1,4 +1,4 @@
-import { Container, Graphics, FillGradient, Sprite, Assets, ColorMatrixFilter, BlurFilter } from 'pixi.js';
+import { Container, Graphics, FillGradient, Sprite, Assets, ColorMatrixFilter, BlurFilter, Text, TextStyle } from 'pixi.js';
 import { Player } from '../entities/Player.js';
 import { Monster } from '../entities/Monster.js';
 import { Item } from '../entities/Item.js';
@@ -9,6 +9,7 @@ import { AudioManager } from '../managers/AudioManager.js';
 import { GameOverScene } from './GameOverScene.js';
 import { SettingsModal } from '../ui/SettingsModal.js';
 import { MenuScene } from './MenuScene.js';
+import gsap from 'gsap';
 
 export class GameScene extends Container {
   init(game) {
@@ -110,12 +111,19 @@ export class GameScene extends Container {
       this.gridContainer.scale.set(scale);
       
       // Center the grid perfectly inside the background's dark portal
-      let gridY = height * 0.52;
+      // The new background image has the portal located lower (around 62% of the height)
+      let gridY = height * 0.62;
       
       // Safety check to ensure it doesn't overlap the header on tiny/short screens
       const minGridY = headerH + gap + scaledGridSize / 2;
       if (gridY < minGridY) {
           gridY = minGridY;
+      }
+      
+      // Safety check to ensure it doesn't fall off the bottom of the screen
+      const maxGridY = height - bottomPad - scaledGridSize / 2;
+      if (gridY > maxGridY) {
+          gridY = maxGridY;
       }
       
       this.gridContainer.position.set(width / 2, gridY);
@@ -386,8 +394,89 @@ export class GameScene extends Container {
   }
   
   nextFloor() {
-      this.floor++;
-      this.generateLevel(this.floor);
+      // 1. Block input immediately
+      this.isProcessingSwipe = true;
+      
+      // 2. Animate Grid fading out
+      gsap.to(this.gridContainer, {
+          alpha: 0,
+          y: this.gridContainer.y + 30, // Drop down slightly
+          duration: 0.3,
+          ease: "power2.in",
+          onComplete: () => {
+              // 3. Increment floor and generate new level invisibly
+              this.floor++;
+              this.generateLevel(this.floor);
+              
+              // Re-block input since generateLevel sets it to false
+              this.isProcessingSwipe = true; 
+              
+              // 4. Show a "Floor X" announcement text
+              this.showFloorAnnouncement();
+          }
+      });
+  }
+  
+  showFloorAnnouncement() {
+      const { width, height } = this.game.app.screen;
+      
+      const announceText = new Text({
+          text: `TẦNG ${this.floor}`,
+          style: new TextStyle({
+              fontFamily: ['Be Vietnam Pro', 'sans-serif'],
+              fontSize: 64,
+              fill: 0xFFCA28, // Gold
+              stroke: { color: 0x5D4037, width: 8, join: 'round' },
+              fontWeight: "900",
+              letterSpacing: 2,
+              dropShadow: {
+                  alpha: 0.6,
+                  angle: Math.PI / 6,
+                  blur: 6,
+                  color: 0x000000,
+                  distance: 6
+              }
+          })
+      });
+      announceText.anchor.set(0.5);
+      
+      // Position it exactly where the grid is going to be
+      announceText.position.set(width / 2, this.gridContainer.y);
+      announceText.scale.set(0);
+      announceText.alpha = 0;
+      this.addChild(announceText);
+      
+      // Animate text pop in
+      gsap.to(announceText.scale, { x: 1, y: 1, duration: 0.5, ease: "back.out(1.5)" });
+      gsap.to(announceText, { alpha: 1, duration: 0.3 });
+      
+      // Hold then fade out and animate grid back in
+      gsap.to(announceText, {
+          alpha: 0,
+          y: announceText.y - 40,
+          duration: 0.4,
+          delay: 0.8,
+          ease: "power2.in",
+          onComplete: () => {
+              this.removeChild(announceText);
+              announceText.destroy();
+              
+              // Fade grid back in
+              this.gridContainer.alpha = 0;
+              const originalY = this.gridContainer.y;
+              this.gridContainer.y = originalY + 30; // start slightly below
+              
+              gsap.to(this.gridContainer, {
+                  alpha: 1,
+                  y: originalY, // float up to original
+                  duration: 0.5,
+                  ease: "back.out(1)",
+                  onComplete: () => {
+                      this.isProcessingSwipe = false;
+                  }
+              });
+          }
+      });
   }
   
   updateBackgroundHue(floor) {
@@ -418,8 +507,7 @@ export class GameScene extends Container {
       
       // Boss floor
       if (floor % 5 === 0) {
-          this.bgFilter.brightness(0.6, true);
-          this.bgFilter.contrast(1.2, true);
+          this.bgFilter.brightness(0.75, true); // Just slightly darker for boss, no weird contrast
       } else {
           this.bgFilter.brightness(0.85, true); // slightly dim for readability
       }
@@ -718,7 +806,11 @@ export class GameScene extends Container {
     document.getElementById('btn-skip').onclick = () => {
         AudioManager.playClickSFX();
         cleanup();
-        this.showGameOver();
+        
+        // Kick out animation then show game over
+        this.player.kickOut(() => {
+            this.showGameOver();
+        });
     };
   }
 

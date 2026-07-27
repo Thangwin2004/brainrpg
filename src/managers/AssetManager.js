@@ -12,6 +12,7 @@ export const AVATAR_FILES = [
   "008_avatar_husky.png",
   "009_avatar_doremonk.png",
   "010_avatar_echxanh1.png",
+  "010_avatar_echxanh1_kicked.png",
   "011_avatar_nudaeng.png",
   "012_avatar_hubcat.png",
   "013_avatar_unicorn.png",
@@ -80,7 +81,8 @@ export class AssetManager {
           name: 'backgrounds',
           assets: [
             { alias: 'bg_menu', src: '/assets/image/backgrounds/bg_menu.png' },
-            { alias: 'bg_game', src: '/assets/image/backgrounds/bg_game.png' }
+            { alias: 'bg_game', src: '/assets/image/backgrounds/bg_game.png' },
+            { alias: 'bg_gameover', src: '/assets/image/backgrounds/bg_gameover.png' }
           ]
         }
       ]
@@ -92,8 +94,8 @@ export class AssetManager {
     // Initialize audio system and preload SFX buffers
     AudioManager.init();
     
-    // We can filter out the main character for the monsters pool
-    this.monsterAvatars = AVATAR_FILES.filter(f => f !== MAIN_CHAR_FILE);
+    // We can filter out the main character and kicked versions for the monsters pool
+    this.monsterAvatars = AVATAR_FILES.filter(f => f !== MAIN_CHAR_FILE && !f.includes('_kicked'));
   }
   
   static getRandomMonsterTexture() {

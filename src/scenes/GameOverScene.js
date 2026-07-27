@@ -1,7 +1,8 @@
-import { Container, Graphics, Text, TextStyle, FillGradient } from 'pixi.js';
+import { Container, Graphics, Text, TextStyle, FillGradient, Sprite, Assets, BlurFilter } from 'pixi.js';
 import { IconBtn } from '../ui/Button.js';
 import { GameScene } from './GameScene.js';
 import { MenuScene } from './MenuScene.js';
+import { AssetManager } from '../managers/AssetManager.js';
 import gsap from 'gsap';
 
 export class GameOverScene extends Container {
@@ -21,37 +22,39 @@ export class GameOverScene extends Container {
     this.game = game;
     const { width, height } = game.app.screen;
 
-    // Background — Lumina Play Lavender Gradient
-    const bgGrad = new FillGradient(0, 0, 0, height);
-    bgGrad.addColorStop(0, '#B39DDB');
-    bgGrad.addColorStop(1, '#7E57C2');
+    // Background — Tribal theme
+    this.bgContainer = new Container();
+    this.addChild(this.bgContainer);
+    
+    // Background image (Outside, lying on ground)
+    this.bgImage = new Sprite(Assets.get('bg_gameover'));
+    this.bgImage.anchor.set(0.5);
+    this.bgImage.tint = 0x999999; // Slight dimming to make UI pop
+    this.bgContainer.addChild(this.bgImage);
 
-    this.bg = new Graphics().rect(0, 0, width, height).fill(bgGrad);
-    this.addChild(this.bg);
-
-    // Floating particles (decorative circles)
-    this.particles = [];
-    for (let i = 0; i < 12; i++) {
-      const p = new Graphics()
-        .circle(0, 0, 4 + Math.random() * 8)
-        .fill({ color: 0xffffff, alpha: 0.15 + Math.random() * 0.15 });
-      p.position.set(Math.random() * width, Math.random() * height);
-      this.addChild(p);
-      this.particles.push(p);
-
-      gsap.to(p, {
-        y: p.y - 60 - Math.random() * 80,
-        alpha: 0,
-        duration: 2 + Math.random() * 3,
-        repeat: -1,
-        delay: Math.random() * 2,
-        ease: "power1.out",
-        onRepeat: () => {
-          p.position.set(Math.random() * width, height + 20);
-          p.alpha = 0.15 + Math.random() * 0.15;
-        }
-      });
+    // Dynamic Particles (Fireflies/Spores)
+    this.particleContainer = new Container();
+    this.addChild(this.particleContainer);
+    
+    this.fireflies = [];
+    for (let i = 0; i < 30; i++) {
+        const firefly = new Graphics();
+        firefly.circle(0, 0, Math.random() * 2 + 1.5).fill({ color: 0xFFFFAA, alpha: Math.random() * 0.6 + 0.2 });
+        firefly.x = Math.random() * width;
+        firefly.y = Math.random() * height;
+        
+        // Custom properties for animation
+        firefly.vx = (Math.random() - 0.5) * 0.5;
+        firefly.vy = -Math.random() * 1.2 - 0.5; // Float upwards
+        firefly.sinOffset = Math.random() * Math.PI * 2;
+        firefly.sinSpeed = Math.random() * 0.03 + 0.01;
+        
+        this.particleContainer.addChild(firefly);
+        this.fireflies.push(firefly);
     }
+
+    // Ticker for fireflies
+    this.game.app.ticker.add(this.updateParticles, this);
 
     // Create Card Modal
     this.modal = new Container();
@@ -60,38 +63,58 @@ export class GameOverScene extends Container {
     const cardW = 360;
     const cardH = 380;
 
-    // White Card
+    // 1. Dark Shadow Base
+    const shadowBg = new Graphics()
+      .roundRect(-cardW / 2 + 5, -cardH / 2 + 15, cardW, cardH, 20)
+      .fill({ color: 0x000000, alpha: 0.3 });
+    this.modal.addChild(shadowBg);
+
+    // 2. Thick Wooden/Stone Border
+    const borderGrad = new FillGradient(0, -cardH / 2, 0, cardH / 2);
+    borderGrad.addColorStop(0, 0x8D6E63);
+    borderGrad.addColorStop(1, 0x5D4037);
+
+    const borderBg = new Graphics()
+      .roundRect(-cardW / 2, -cardH / 2 + 6, cardW, cardH, 20)
+      .fill({ color: 0x4E342E }) // Shadow Base
+      .roundRect(-cardW / 2, -cardH / 2, cardW, cardH, 20)
+      .fill(borderGrad);
+    this.modal.addChild(borderBg);
+
+    // 3. Bright Cream Card Face
     const cardFace = new Graphics()
-      .roundRect(-cardW / 2, -cardH / 2, cardW, cardH, 28)
-      .fill({ color: 0xFFFFFF });
+      .roundRect(-cardW / 2 + 12, -cardH / 2 + 12, cardW - 24, cardH - 24, 14)
+      .fill({ color: 0xfbfaf5 });
     this.modal.addChild(cardFace);
 
-    // Title Ribbon — Coral accent
-    const ribbonW = 240;
-    const ribbonH = 42;
+    // 4. Floating 3D Title Ribbon (Orange/Gold)
+    const ribbonW = 180;
+    const ribbonH = 46;
     const ribbonY = -cardH / 2;
     const ribbonRadius = ribbonH / 2;
 
     const ribGrad = new FillGradient(0, ribbonY - ribbonH / 2, 0, ribbonY + ribbonH / 2);
-    ribGrad.addColorStop(0, 0xFF8A80);
-    ribGrad.addColorStop(1, 0xE57373);
+    ribGrad.addColorStop(0, 0xFFCA28);
+    ribGrad.addColorStop(1, 0xFF8F00);
 
     const ribbon = new Graphics()
-      .roundRect(-ribbonW / 2, ribbonY - ribbonH / 2 + 4, ribbonW, ribbonH, ribbonRadius)
-      .fill({ color: 0xD32F2F, alpha: 0.3 })
+      .roundRect(-ribbonW / 2, ribbonY - ribbonH / 2 + 5, ribbonW, ribbonH, ribbonRadius)
+      .fill({ color: 0xE65100 }) // Ribbon shadow
       .roundRect(-ribbonW / 2, ribbonY - ribbonH / 2, ribbonW, ribbonH, ribbonRadius)
       .fill(ribGrad)
-      .stroke({ color: 0xffffff, width: 3 });
+      .stroke({ color: 0xffffff, width: 3.5 })
+      .ellipse(0, ribbonY - ribbonH / 4, ribbonW * 0.42, ribbonH * 0.2)
+      .fill({ color: 0xffffff, alpha: 0.3 });
     this.modal.addChild(ribbon);
 
     const titleText = new Text({
       text: "KẾT THÚC",
       style: new TextStyle({
-        fontFamily: "'Quicksand', 'Be Vietnam Pro', sans-serif",
-        fontSize: 22,
+        fontFamily: ['Be Vietnam Pro', 'sans-serif'],
+        fontSize: 24,
         fill: 0xffffff,
-        fontWeight: "700",
-        letterSpacing: 2
+        fontWeight: "900",
+        letterSpacing: 1
       }),
     });
     titleText.anchor.set(0.5);
@@ -115,10 +138,10 @@ export class GameOverScene extends Container {
     const info = new Text({
       text: labelText,
       style: new TextStyle({
-        fontFamily: "'Quicksand', 'Be Vietnam Pro', sans-serif",
+        fontFamily: ['Be Vietnam Pro', 'sans-serif'],
         fontSize: 18,
-        fill: this.isNewRecord ? 0xFF8A80 : 0x7a7580,
-        fontWeight: "700",
+        fill: this.isNewRecord ? 0xE65100 : 0x5D4037,
+        fontWeight: "800",
         align: 'center'
       })
     });
@@ -130,10 +153,10 @@ export class GameOverScene extends Container {
     this.scoreVal = new Text({
       text: "0",
       style: new TextStyle({
-        fontFamily: "'Quicksand', 'Be Vietnam Pro', sans-serif",
+        fontFamily: ['Be Vietnam Pro', 'sans-serif'],
         fontSize: 64,
-        fill: 0x7E57C2,
-        fontWeight: "700"
+        fill: 0xFF8F00,
+        fontWeight: "900"
       })
     });
     this.scoreVal.anchor.set(0.5);
@@ -162,10 +185,10 @@ export class GameOverScene extends Container {
     const bestText = new Text({
       text: `Tốt nhất: ${bestFloor}`,
       style: new TextStyle({
-        fontFamily: "'Quicksand', 'Be Vietnam Pro', sans-serif",
+        fontFamily: ['Be Vietnam Pro', 'sans-serif'],
         fontSize: 14,
-        fill: 0xB39DDB,
-        fontWeight: '600'
+        fill: 0x8D6E63,
+        fontWeight: '800'
       })
     });
     bestText.anchor.set(0.5);
@@ -177,19 +200,19 @@ export class GameOverScene extends Container {
     const btnGap = 45;
     const btnY = 130;
 
-    // Home Button — Lavender
+    // Home Button — Gold
     const homeSvg = `<svg viewBox="0 0 24 24" width="24" height="24"><path fill="#ffffff" d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>`;
     const homeBtn = new IconBtn(homeSvg, () => {
       this.game.setScene(new MenuScene());
-    }, btnSize, '#B39DDB', '#9575CD', '#7E57C2');
+    }, btnSize, '#FFE082', '#FFCA28', '#FFA000');
     homeBtn.position.set(-btnGap, btnY);
     this.modal.addChild(homeBtn);
 
-    // Replay Button — Coral accent
+    // Replay Button — Orange
     const replaySvg = `<svg viewBox="0 0 24 24" width="24" height="24"><path fill="#ffffff" d="M12 5V1L7 6l5 5V7c3.31 0 6 2.69 6 6s-2.69 6-6 6-6-2.69-6-6H4c0 4.42 3.58 8 8 8s8-3.58 8-8-3.58-8-8-8z"/></svg>`;
     const replayBtn = new IconBtn(replaySvg, () => {
       this.game.setScene(new GameScene());
-    }, btnSize, '#FF8A80', '#E57373', '#D32F2F');
+    }, btnSize, '#FFB74D', '#FF9800', '#F57C00');
     replayBtn.position.set(btnGap, btnY);
     this.modal.addChild(replayBtn);
 
@@ -202,12 +225,34 @@ export class GameOverScene extends Container {
     this.resize(width, height);
   }
 
+  updateParticles() {
+      if (!this.fireflies) return;
+      const { width, height } = this.game.app.screen;
+      const time = performance.now() * 0.001;
+      
+      this.fireflies.forEach(firefly => {
+          firefly.x += firefly.vx + Math.sin(time * 2 + firefly.sinOffset) * firefly.sinSpeed;
+          firefly.y += firefly.vy;
+          
+          if (firefly.y < -10) {
+              firefly.y = height + 10;
+              firefly.x = Math.random() * width;
+          }
+          if (firefly.x < -10) firefly.x = width + 10;
+          if (firefly.x > width + 10) firefly.x = -10;
+      });
+  }
+
   resize(width, height) {
-    if (this.bg) {
-      const bgGrad = new FillGradient(0, 0, 0, height);
-      bgGrad.addColorStop(0, '#B39DDB');
-      bgGrad.addColorStop(1, '#7E57C2');
-      this.bg.clear().rect(0, 0, width, height).fill(bgGrad);
+    if (this.bgImage && this.bgImage.texture) {
+        const isLandscape = width > height;
+        const scale = isLandscape 
+            ? Math.max(width / this.bgImage.texture.width, height / this.bgImage.texture.height)
+            : Math.max(width / this.bgImage.texture.width, height / this.bgImage.texture.height);
+        
+        // Position and scale background to cover
+        this.bgImage.position.set(width / 2, height / 2);
+        this.bgImage.scale.set(scale);
     }
     
     if (this.modal) {
@@ -218,8 +263,8 @@ export class GameOverScene extends Container {
   }
 
   destroy(options) {
-    if (this.particles) {
-      this.particles.forEach(p => gsap.killTweensOf(p));
+    if (this.game && this.game.app && this.game.app.ticker) {
+        this.game.app.ticker.remove(this.updateParticles, this);
     }
     if (this.emoji) gsap.killTweensOf(this.emoji);
     if (this.scoreVal) gsap.killTweensOf(this.scoreVal);

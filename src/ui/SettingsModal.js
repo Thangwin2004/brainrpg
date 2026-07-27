@@ -69,7 +69,7 @@ export class SettingsModal extends Container {
         this.modal.addChild(ribbon);
 
         const titleText = new Text({
-          text: "CÀI ĐẶT GAME",
+          text: "CÀI ĐẶT",
           style: new TextStyle({
             fontFamily: ['Be Vietnam Pro', 'sans-serif'],
             fontSize: 22,
@@ -104,7 +104,7 @@ export class SettingsModal extends Container {
         bgmLabel.position.set(-145, bgmRowY);
         this.modal.addChild(bgmLabel);
         
-        this.drawDots(bgmLabel.x + bgmLabel.width + 10, bgmRowY, 80);
+        // Removed drawDots here
 
         this.bgmToggleBtn = new Graphics();
         this.bgmToggleBtn.position.set(115, bgmRowY);
@@ -130,7 +130,7 @@ export class SettingsModal extends Container {
         sfxLabel.position.set(-145, sfxRowY);
         this.modal.addChild(sfxLabel);
         
-        this.drawDots(sfxLabel.x + sfxLabel.width + 10, sfxRowY, 80);
+        // Removed drawDots here
 
         this.sfxToggleBtn = new Graphics();
         this.sfxToggleBtn.position.set(115, sfxRowY);

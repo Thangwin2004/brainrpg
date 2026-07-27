@@ -45,7 +45,7 @@ export class LeaderboardModal extends Container {
         this.modal.addChild(cardFace);
 
         // 4. Floating 3D Title Ribbon (Purple)
-        const ribbonW = 300;
+        const ribbonW = 240;
         const ribbonH = 42;
         const ribbonY = -cardH / 2;
         const ribbonRadius = ribbonH / 2;
@@ -65,10 +65,10 @@ export class LeaderboardModal extends Container {
         this.modal.addChild(ribbon);
 
         const titleText = new Text({
-          text: "BẢNG VÀNG THÀNH TÍCH",
+          text: "BẢNG XẾP HẠNG",
           style: new TextStyle({
             fontFamily: ['Be Vietnam Pro', 'sans-serif'],
-            fontSize: 18,
+            fontSize: 22,
             fill: 0xffffff,
             fontWeight: "900",
             letterSpacing: 1

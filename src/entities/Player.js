@@ -1,5 +1,5 @@
-import { Container, Sprite, Text, TextStyle, Graphics } from 'pixi.js';
-import { AssetManager } from '../managers/AssetManager.js';
+import { Container, Sprite, Text, TextStyle, Graphics, Assets } from 'pixi.js';
+import { AssetManager, MAIN_CHAR_FILE } from '../managers/AssetManager.js';
 import gsap from 'gsap';
 
 export class Player extends Container {
@@ -183,17 +183,43 @@ export class Player extends Container {
   }
   
   die() {
-    // Flash red
-    this.sprite.tint = 0xff0000;
-    
+    // Just a small hurt shake when defeated, before the revive modal
     gsap.to(this.sprite, {
-      rotation: Math.PI / 2,
-      y: 20,
-      duration: 0.3,
-      ease: "power2.in"
+      x: (Math.random() > 0.5 ? 10 : -10),
+      yoyo: true,
+      repeat: 5,
+      duration: 0.05
+    });
+  }
+  
+  kickOut(onCompleteCallback) {
+    try {
+        const kickedTextureId = MAIN_CHAR_FILE.replace('.png', '_kicked.png');
+        const kickedTexture = Assets.get(kickedTextureId);
+        if (kickedTexture) {
+            this.sprite.texture = kickedTexture;
+        }
+    } catch (e) {
+        console.error("Failed to load kicked texture:", e);
+    }
+
+    // Kicked from left, flying straight into the screen (camera)
+    gsap.to(this.sprite, {
+      y: -200, // Fly up
+      x: 150,  // Fly right
+      rotation: -0.15, // Slight tilt
+      duration: 0.5,
+      ease: "power2.in",
+      onComplete: onCompleteCallback
     });
     
-    this.showFloatingText(`WASTED`, 0xff0000);
+    // Scale up to simulate Z-axis flying into the screen (moderate size)
+    gsap.to(this.sprite.scale, {
+      x: this.sprite.scale.x * 3.5, 
+      y: this.sprite.scale.y * 3.5, 
+      duration: 0.5, 
+      ease: "power2.in"
+    });
   }
   
   showFloatingText(msg, color) {
