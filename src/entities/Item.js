@@ -7,6 +7,7 @@ export class Item extends Container {
     super();
     this.power = power;
     this.type = type;
+    this.isItem = true;
     
     this.gridX = 0;
     this.gridY = 0;

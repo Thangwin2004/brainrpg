@@ -8,6 +8,7 @@ export class Monster extends Container {
     
     this.power = power;
     this.isBoss = isBoss;
+    this.isMonster = true;
     
     this.gridX = 0;
     this.gridY = 0;

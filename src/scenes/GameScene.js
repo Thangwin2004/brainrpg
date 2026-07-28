@@ -586,7 +586,7 @@ export class GameScene extends Container {
             prevPower: this.player.power,
             bossGainedPower,
             entityData: targetEntity ? {
-                type: targetEntity instanceof Monster ? 'monster' : 'item',
+                type: targetEntity.isMonster ? 'monster' : 'item',
                 power: targetEntity.power,
                 itemType: targetEntity.type,
                 isBoss: targetEntity.isBoss
@@ -605,7 +605,7 @@ export class GameScene extends Container {
             AudioManager.playSwipeSFX();
             await this.player.moveTo(wPos.x, wPos.y);
             this.updateStatsUI();
-        } else if (targetEntity.constructor.name === 'Item') {
+        } else if (targetEntity.isItem) {
             // Collect item
             if (targetEntity.type === 'multiply') {
                 this.player.multiplyPower(targetEntity.power);
@@ -626,7 +626,7 @@ export class GameScene extends Container {
 
             await this.player.moveTo(wPos.x, wPos.y);
             this.updateStatsUI();
-        } else if (targetEntity.constructor.name === 'Monster') {
+        } else if (targetEntity.isMonster) {
             // Combat
             AudioManager.playAttackSFX();
             await this.player.bump(direction, wPos.x, wPos.y);
