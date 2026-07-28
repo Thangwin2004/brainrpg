@@ -43,12 +43,8 @@ export class GameScene extends Container {
     this.isProcessingSwipe = false;
     this.freeRollbacks = 3;
     
-    this.isoContainer = new Container();
     this.floorContainer = new Container();
-    this.isoContainer.addChild(this.floorContainer);
-    this.isoContainer.scale.y = 0.5;
-    this.floorContainer.rotation = Math.PI / 4;
-    this.addChild(this.isoContainer);
+    this.addChild(this.floorContainer);
 
     this.gridContainer = new Container();
     this.addChild(this.gridContainer);
@@ -105,14 +101,14 @@ export class GameScene extends Container {
           maxGridPx = Math.min(width - sidePad * 2, availH);
       }
       
-      const gridTotalW = this.baseCellSize * this.gridSize * 1.5; 
-      const gridTotalH = this.baseCellSize * this.gridSize * 0.75;
+      const gridTotalW = this.baseCellSize * this.gridSize; 
+      const gridTotalH = this.baseCellSize * this.gridSize;
       
       const scale = Math.min(maxGridPx / gridTotalW, availH / gridTotalH);
       
       this.gridContainer.scale.set(scale);
-      if (this.isoContainer) {
-          this.isoContainer.scale.set(scale, scale * 0.5);
+      if (this.floorContainer) {
+          this.floorContainer.scale.set(scale);
       }
       
       let gridY = height * 0.62;
@@ -125,7 +121,7 @@ export class GameScene extends Container {
       if (gridY > maxGridY) gridY = maxGridY;
       
       this.gridContainer.position.set(width / 2, gridY);
-      if (this.isoContainer) this.isoContainer.position.set(width / 2, gridY);
+      if (this.floorContainer) this.floorContainer.position.set(width / 2, gridY);
     }
     if (this.settingsModal) this.settingsModal.resize(width, height);
   }
@@ -222,9 +218,9 @@ export class GameScene extends Container {
         }
         paths.push(1, 4, 7);
         const domains = {
-            1: {min: 0, max: 1},
-            4: {min: 3, max: 5},
-            7: {min: 7, max: 8}
+            1: {min: 0, max: 2},
+            4: {min: 4, max: 4},
+            7: {min: 6, max: 8}
         };
         
         paths.forEach(px => {
@@ -258,7 +254,9 @@ export class GameScene extends Container {
                 const moveDir = pX > currX ? 1 : (pX < currX ? -1 : 0);
                 while(currX !== pX) {
                     currX += moveDir;
-                    cells.push({x: currX, y: 1});
+                    if (currX !== pX) {
+                        cells.push({x: currX, y: 1});
+                    }
                 }
             }
             
@@ -446,10 +444,10 @@ export class GameScene extends Container {
       this.isProcessingSwipe = true;
       
       // 2. Animate Grid fading out
-      if (this.isoContainer) {
-          gsap.to(this.isoContainer, {
+      if (this.floorContainer) {
+          gsap.to(this.floorContainer, {
               alpha: 0,
-              y: this.isoContainer.y + 30,
+              y: this.floorContainer.y + 30,
               duration: 0.3,
               ease: "power2.in"
           });
@@ -523,10 +521,10 @@ export class GameScene extends Container {
               const originalY = this.gridContainer.y;
               this.gridContainer.y = originalY + 30; // start slightly below
               
-              if (this.isoContainer) {
-                  this.isoContainer.alpha = 0;
-                  this.isoContainer.y = originalY + 30;
-                  gsap.to(this.isoContainer, {
+              if (this.floorContainer) {
+                  this.floorContainer.alpha = 0;
+                  this.floorContainer.y = originalY + 30;
+                  gsap.to(this.floorContainer, {
                       alpha: 1,
                       y: originalY,
                       duration: 0.5,
@@ -594,11 +592,9 @@ export class GameScene extends Container {
     const gridW = this.gridSize * this.cellSize;
     const cartX = gridX * this.cellSize - gridW / 2 + this.cellSize / 2;
     const cartY = gridY * this.cellSize - gridW / 2 + this.cellSize / 2;
-    const cos = Math.cos(Math.PI / 4);
-    const sin = Math.sin(Math.PI / 4);
     return {
-        x: cartX * cos - cartY * sin,
-        y: (cartX * sin + cartY * cos) * 0.5
+        x: cartX,
+        y: cartY
     };
   }
   
