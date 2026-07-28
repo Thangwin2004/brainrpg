@@ -13,9 +13,12 @@ export class SwipeManager {
     this.app.stage.eventMode = 'static';
     this.app.stage.hitArea = new Rectangle(0, 0, 10000, 10000); // Big enough to catch all
     
-    this.app.stage.on('pointerdown', this.onPointerDown.bind(this));
-    this.app.stage.on('pointerup', this.onPointerUp.bind(this));
-    this.app.stage.on('pointerupoutside', this.onPointerUp.bind(this));
+    this._onPointerDown = this.onPointerDown.bind(this);
+    this._onPointerUp = this.onPointerUp.bind(this);
+    
+    this.app.stage.on('pointerdown', this._onPointerDown);
+    this.app.stage.on('pointerup', this._onPointerUp);
+    this.app.stage.on('pointerupoutside', this._onPointerUp);
   }
   
   onPointerDown(e) {
@@ -50,8 +53,8 @@ export class SwipeManager {
   }
   
   destroy() {
-    this.app.stage.off('pointerdown', this.onPointerDown.bind(this));
-    this.app.stage.off('pointerup', this.onPointerUp.bind(this));
-    this.app.stage.off('pointerupoutside', this.onPointerUp.bind(this));
+    this.app.stage.off('pointerdown', this._onPointerDown);
+    this.app.stage.off('pointerup', this._onPointerUp);
+    this.app.stage.off('pointerupoutside', this._onPointerUp);
   }
 }

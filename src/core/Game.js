@@ -10,7 +10,7 @@ export class Game {
   async init() {
     await this.app.init({
       autoDensity: true,
-      resolution: Math.max(window.devicePixelRatio, 2),
+      resolution: Math.min(window.devicePixelRatio || 1, 2),
       backgroundColor: 0x1a1a2e, // Dark deep blue/purple base
       preference: 'webgl',
       resizeTo: window

@@ -42,12 +42,8 @@ export class Item extends Container {
     this.addChildAt(this.shadow, 0);
 
     // Power Badge (Top Right Pill - same style as monsters)
-    let badgeStr = `+${this.power}`;
-    if (this.type === 'multiply') badgeStr = `x${this.power}`;
-    if (this.type === 'divide') badgeStr = `/${this.power}`;
-    
     this.powerText = new Text({
-      text: badgeStr,
+      text: "", // Will be set by updatePowerBadge
       style: new TextStyle({
         fontFamily: "'Quicksand', 'Be Vietnam Pro', sans-serif",
         fill: 0xffffff,
@@ -57,14 +53,12 @@ export class Item extends Container {
     });
     this.powerText.anchor.set(0.5);
     
-    const tw = Math.max(26, this.powerText.width + 10);
-    this.statsBg = new Graphics()
-      .roundRect(30 - tw, -30, tw, 18, 9)
-      .fill({ color: haloColor, alpha: 0.95 });
+    this.statsBg = new Graphics();
     this.addChild(this.statsBg);
     
-    this.powerText.position.set(30 - tw / 2, -21);
     this.addChild(this.powerText);
+    
+    this.updatePowerBadge();
     
     // Gentle floating animation
     this.idleTween = gsap.to(this.icon, {
@@ -76,6 +70,22 @@ export class Item extends Container {
     });
   }
   
+  updatePowerBadge() {
+    let badgeStr = `+${this.power}`;
+    if (this.type === 'multiply') badgeStr = `x${this.power}`;
+    if (this.type === 'divide') badgeStr = `/${this.power}`;
+    
+    this.powerText.text = badgeStr;
+    const tw = Math.max(26, this.powerText.width + 10);
+    const haloColor = this.type === 'multiply' ? 0xFFB300 : (this.type === 'divide' ? 0xAB47BC : 0x80CBC4);
+    
+    this.statsBg.clear()
+      .roundRect(30 - tw, -30, tw, 18, 9)
+      .fill({ color: haloColor, alpha: 0.95 });
+      
+    this.powerText.position.set(30 - tw / 2, -21);
+  }
+
   collect() {
     this.idleTween.kill();
     gsap.to(this.scale, {

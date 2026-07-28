@@ -195,33 +195,7 @@ export class Player extends Container {
     this.showFloatingText(`-${amount}`, 0xff4444);
   }
   
-  multiplyPower(amount) {
-    this.power = Math.floor(this.power * amount);
-    this.updatePowerBadge();
-    
-    // Flash yellow/gold
-    this.sprite.tint = 0xffd700;
-    setTimeout(() => {
-      if (!this.destroyed) this.sprite.tint = 0xffffff;
-    }, 150);
-    
-    gsap.to(this.sprite, {
-      y: -20,
-      scale: 1.2,
-      yoyo: true,
-      repeat: 1,
-      duration: 0.15,
-      onComplete: () => {
-        if (!this.destroyed) {
-            this.sprite.y = 0;
-            const baseSize = Math.max(AssetManager.getPlayerTexture().width, AssetManager.getPlayerTexture().height);
-            this.sprite.scale.set(58 / baseSize);
-        }
-      }
-    });
-    
-    this.showFloatingText(`x${amount}`, 0xffd700);
-  }
+
   
   resetPower(val = 10) {
       this.power = val;
