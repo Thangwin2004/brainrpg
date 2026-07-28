@@ -605,7 +605,7 @@ export class GameScene extends Container {
             AudioManager.playSwipeSFX();
             await this.player.moveTo(wPos.x, wPos.y);
             this.updateStatsUI();
-        } else if (targetEntity.constructor.name === 'Item') {
+        } else if (targetEntity instanceof Item) {
             // Collect item
             if (targetEntity.type === 'multiply') {
                 this.player.multiplyPower(targetEntity.power);
@@ -626,7 +626,7 @@ export class GameScene extends Container {
 
             await this.player.moveTo(wPos.x, wPos.y);
             this.updateStatsUI();
-        } else if (targetEntity.constructor.name === 'Monster') {
+        } else if (targetEntity instanceof Monster) {
             // Combat
             AudioManager.playAttackSFX();
             await this.player.bump(direction, wPos.x, wPos.y);
