@@ -267,33 +267,24 @@ export class GameScene extends Container {
                 if ((r === pY && c === pX) || (r === bY && c === bX)) continue;
                 if (pathCells.some(pc => pc.x === c && pc.y === r)) continue;
                 
-                const rand = Math.random();
-                let cum = 0;
+                // Giảm mật độ đồ vật/quái trên bàn cờ lớn để đỡ rối mắt
+                const density = gs === 5 ? 1 : (gs === 7 ? 0.5 : 0.35);
                 
-                cum += probBlocker;
-                if (rand < cum) {
+                const rand = Math.random();
+                if (rand < 0.12 * density) {
                     // Blocker (Unbeatable monster)
                     const blockerPower = bossBasePower * 2 + Math.floor(Math.random() * 100);
                     this.placeEntity(new Monster(blockerPower, false), c, r);
-                    continue;
-                }
-                
-                cum += probTrap;
-                if (rand < cum) {
-                    // Trap
+                } else if (rand < 0.17 * density) {
+                    // Trap (Divide)
                     this.placeEntity(new Item(2, 'divide'), c, r);
-                    continue;
-                }
-                
-                cum += probBait;
-                if (rand < cum) {
+                } else if (rand < 0.27 * density) {
                     // Bait
                     if (Math.random() > 0.5) {
                         this.placeEntity(new Item(2, 'multiply'), c, r);
                     } else {
                         this.placeEntity(new Item(15 + Math.floor(Math.random()*15), 'add'), c, r);
                     }
-                    continue;
                 }
                 
                 // Otherwise Empty
