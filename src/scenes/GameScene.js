@@ -10,6 +10,7 @@ import { AudioManager } from '../managers/AudioManager.js';
 import { GameOverScene } from './GameOverScene.js';
 import { SettingsModal } from '../ui/SettingsModal.js';
 import { MenuScene } from './MenuScene.js';
+import { winkGame } from '../integrations/wink/wink-adapter.js';
 import gsap from 'gsap';
 
 export class GameScene extends Container {
@@ -40,6 +41,9 @@ export class GameScene extends Container {
 
         // Game State
         this.floor = 1;
+
+        // ── Wink: start a new round ──
+        this._winkRound = winkGame.startRound();
         this.isProcessingSwipe = false;
         this.freeRollbacks = 3;
 
@@ -843,6 +847,20 @@ export class GameScene extends Container {
     }
 
     showGameOver() {
+        // ── Wink: complete round + submit score ──
+        if (this._winkRound) {
+            winkGame.completeRound(this._winkRound, {
+                metadata: { outcome: 'defeated', floor: this.floor },
+            });
+            if (winkGame.canSubmitScore) {
+                winkGame.submitFinalScore({
+                    score: this.floor,
+                    playTime: Math.round((Date.now() - this._winkRound.startedAtMs) / 1000),
+                    gameMode: 'adventure',
+                }).catch(() => {});
+            }
+        }
+
         GameScene.defeatCount = (GameScene.defeatCount || 0) + 1;
         const processGameOver = async () => {
             if (GameScene.defeatCount >= 3) {
