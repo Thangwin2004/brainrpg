@@ -1,0 +1,44 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: 'Be Vietnam Pro', sans-serif;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}
+
+body, html {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background-color: #1a1a2e; /* Dark base before Pixi loads */
+  touch-action: none; /* Prevent browser scrolling/zooming */
+}
+
+#game-container {
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 1;
+}
+
+#game-container canvas {
+  display: block;
+}
+
+#ui-layer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 10;
+  pointer-events: none; /* Let clicks pass through to canvas by default */
+}
+
+#ui-layer > * {
+  pointer-events: auto; /* Enable clicks on actual UI elements */
+}
