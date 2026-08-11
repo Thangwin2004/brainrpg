@@ -2,7 +2,7 @@ import { Container, Graphics, FillGradient, Text, TextStyle } from 'pixi.js';
 import { IconBtn } from './Button.js';
 
 export class StatsBar extends Container {
-  constructor(width, onOpenSettings) {
+  constructor(width, onOpenSettings, onRestart) {
     super();
 
     // ── Shared style constants ──
@@ -43,14 +43,21 @@ export class StatsBar extends Container {
     }, this._btnSize, '#D1C4E9', '#B39DDB', '#9575CD');
     this.addChild(this.settingsBtn);
 
-    // 1c. Rollback Button (Soft Purple)
+    // 1c. Restart Button (Soft Purple)
+    const restartSvg = `<svg viewBox="0 0 24 24" width="24" height="24"><path fill="#ffffff" d="M12 5V1L7 6l5 5V7c3.31 0 6 2.69 6 6s-2.69 6-6 6-6-2.69-6-6H4c0 4.42 3.58 8 8 8s8-3.58 8-8-3.58-8-8-8z"/></svg>`;
+    this.restartBtn = new IconBtn(restartSvg, () => {
+      if (onRestart) onRestart();
+    }, this._btnSize, '#D1C4E9', '#B39DDB', '#9575CD');
+    this.addChild(this.restartBtn);
+
+    // 1d. Rollback Button (Soft Purple)
     const undoSvg = `<svg viewBox="0 0 24 24" width="24" height="24"><path fill="#ffffff" d="M12.5 8c-2.65 0-5.05.99-6.9 2.6L2 7v9h9l-3.62-3.62c1.39-1.16 3.16-1.88 5.12-1.88 3.54 0 6.55 2.31 7.6 5.5l2.37-.78C20.89 11.12 17.03 8 12.5 8z"/></svg>`;
     this.rollbackBtn = new IconBtn(undoSvg, () => {
       if (this.onRollback) this.onRollback();
     }, this._btnSize, '#D1C4E9', '#B39DDB', '#9575CD');
     this.addChild(this.rollbackBtn);
 
-    // 1d. Rollback Badge
+    // 1e. Rollback Badge
     this.rollbackBadgeBg = new Graphics()
       .circle(0, 0, 9)
       .fill({ color: 0xE53935 });
@@ -140,11 +147,14 @@ export class StatsBar extends Container {
     // Settings button — right edge
     this.settingsBtn.position.set(width - pad - this._btnSize, row1CenterY);
 
-    // Rollback button — to the left of settings
-    this.rollbackBtn.position.set(width - pad - this._btnSize * 3 - 8, row1CenterY);
+    // Restart button — to the left of settings
+    this.restartBtn.position.set(width - pad - this._btnSize * 3 - 8, row1CenterY);
+
+    // Rollback button — to the left of restart
+    this.rollbackBtn.position.set(width - pad - this._btnSize * 5 - 16, row1CenterY);
 
     // Badge — top-right of rollback button
-    const badgeX = width - pad - this._btnSize * 3 - 8 + 18;
+    const badgeX = width - pad - this._btnSize * 5 - 16 + 18;
     const badgeY = row1CenterY - 18;
     this.rollbackBadgeBg.position.set(badgeX, badgeY);
     this.rollbackBadgeText.position.set(badgeX, badgeY);
@@ -184,6 +194,11 @@ export class StatsBar extends Container {
 
     // Update badge text
     this.rollbackBadgeText.text = count <= 0 ? '+' : String(count);
+
+    // Update Icon
+    const undoSvg = `<svg viewBox="0 0 24 24" width="24" height="24"><path fill="#ffffff" d="M12.5 8c-2.65 0-5.05.99-6.9 2.6L2 7v9h9l-3.62-3.62c1.39-1.16 3.16-1.88 5.12-1.88 3.54 0 6.55 2.31 7.6 5.5l2.37-.78C20.89 11.12 17.03 8 12.5 8z"/></svg>`;
+    const adSvg = `<svg viewBox="0 0 24 24" width="24" height="24"><path fill="#ffffff" d="M21 3H3c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-11 13V8l6 4-6 4z"/></svg>`;
+    this.rollbackBtn.updateIcon(count <= 0 ? adSvg : undoSvg);
 
     // Enable/disable button
     if (canRollback) {

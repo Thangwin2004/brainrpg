@@ -54,7 +54,7 @@ export class GameScene extends Container {
         this.addChild(this.gridContainer);
 
         // UI
-        this.statsBar = new StatsBar(width, this.openSettings.bind(this));
+        this.statsBar = new StatsBar(width, this.openSettings.bind(this), this.handleRestart.bind(this));
         this.statsBar.onRollback = this.handleRollback.bind(this);
         this.addChild(this.statsBar);
 
@@ -89,7 +89,7 @@ export class GameScene extends Container {
             this.statsBar.position.y = topMargin;
         }
 
-        if (this.gridSize) {
+        if (this.cols && this.rows) {
             const headerH = (this.statsBar ? this.statsBar.totalHeight : 100) + topMargin;
             const gap = isLandscape ? 16 : Math.max(24, height * 0.04);
             const bottomPad = isLandscape ? 40 : 20;
@@ -105,8 +105,8 @@ export class GameScene extends Container {
                 maxGridPx = Math.min(width - sidePad * 2, availH);
             }
 
-            const gridTotalW = this.baseCellSize * this.gridSize;
-            const gridTotalH = this.baseCellSize * this.gridSize;
+            const gridTotalW = this.baseCellSize * this.cols;
+            const gridTotalH = this.baseCellSize * this.rows;
 
             const scale = Math.min(maxGridPx / gridTotalW, availH / gridTotalH);
 
@@ -147,29 +147,32 @@ export class GameScene extends Container {
             this.tutorialText = null;
         }
 
-        let gs = 7;
-        if (floor <= 5) gs = 5;
-        else if (floor > 10) gs = 9;
+        let cols = 8;
+        let rows = 9;
+        if (floor <= 5) { cols = 6; rows = 7; }
+        else if (floor > 10) { cols = 8; rows = 10; }
 
-        this.gridSize = gs;
-        this.grid = Array(gs).fill(null).map(() => Array(gs).fill(null));
-        this.walls = Array(gs).fill(null).map(() => Array(gs).fill(true));
-        this.tileStates = Array(gs).fill(null).map(() => Array(gs).fill(0));
-        this.cellGraphics = Array(gs).fill(null).map(() => Array(gs).fill(null));
+        this.cols = cols;
+        this.rows = rows;
+        this.grid = Array(rows).fill(null).map(() => Array(cols).fill(null));
+        this.walls = Array(rows).fill(null).map(() => Array(cols).fill(true));
+        this.tileStates = Array(rows).fill(null).map(() => Array(cols).fill(0));
+        this.cellGraphics = Array(rows).fill(null).map(() => Array(cols).fill(null));
 
         this.baseCellSize = 74;
         this.cellSize = this.baseCellSize;
-        const gridW = this.baseCellSize * gs;
+        const gridW = this.baseCellSize * cols;
+        const gridH = this.baseCellSize * rows;
         this.gridOffsetX = -gridW / 2;
-        this.gridOffsetY = -gridW / 2;
+        this.gridOffsetY = -gridH / 2;
 
         this.resize(this.game.app.screen.width, this.game.app.screen.height);
         this.updateBackgroundHue(floor);
 
         const difficulty = Math.min(floor, 20);
-        const pX = Math.floor(gs / 2);
-        const pY = gs - 1;
-        const bX = pX;
+        const pX = Math.floor(cols / 2);
+        const pY = rows - 1;
+        const bX = Math.floor(cols / 2);
         const bY = 0;
 
 
@@ -188,7 +191,7 @@ export class GameScene extends Container {
             dirs.push({ dx: 0, dy: -1 }); // UP (weight heavier)
             dirs.push({ dx: 0, dy: -1 }); // UP
             if (currX > 0) dirs.push({ dx: -1, dy: 0 }); // LEFT
-            if (currX < gs - 1) dirs.push({ dx: 1, dy: 0 }); // RIGHT
+            if (currX < cols - 1) dirs.push({ dx: 1, dy: 0 }); // RIGHT
             
             // Randomly pick a direction
             let nx, ny;
@@ -224,7 +227,7 @@ export class GameScene extends Container {
         pathCells.push({ x: currX, y: 1 });
         
         // 2. Distribute power along the Golden Path
-        const targetPower = bossBasePower + 2; // Need just enough to beat the boss
+        let targetPower = bossBasePower + 2; // Need just enough to beat the boss
         let currentPower = 10;
         
         // Skip pathCells[0] which is the player start position
@@ -234,7 +237,7 @@ export class GameScene extends Container {
             const powerNeeded = targetPower - currentPower;
             
             if (powerNeeded <= 0) {
-                // Just put an empty space or a very weak monster
+                // Just put an empty space
                 continue;
             }
             
@@ -243,8 +246,15 @@ export class GameScene extends Container {
             stepPower = Math.min(stepPower + Math.floor(Math.random() * 3), powerNeeded); // Randomize a bit
             
             if (stepPower > 0) {
-                // Randomly decide if it's an Item(+) or a Monster
-                if (Math.random() > 0.4) {
+                targetPower += 1; // Boss gains 1 power when player collects this!
+                
+                // If the power step is too large, it MUST be an item, else player can't kill it
+                let isItem = Math.random() > 0.4;
+                if (stepPower >= currentPower) {
+                    isItem = true; 
+                }
+
+                if (isItem) {
                     this.placeEntity(new Item(stepPower, 'add'), cell.x, cell.y);
                 } else {
                     this.placeEntity(new Monster(stepPower, false), cell.x, cell.y);
@@ -263,8 +273,8 @@ export class GameScene extends Container {
             probBlocker = 0.65; probTrap = 0.20; probBait = 0.05;
         }
 
-        for (let r = 0; r < gs; r++) {
-            for (let c = 0; c < gs; c++) {
+        for (let r = 0; r < this.rows; r++) {
+            for (let c = 0; c < this.cols; c++) {
                 this.walls[r][c] = false; // All open
                 
                 // Skip player start, boss cell, and golden path
@@ -272,7 +282,7 @@ export class GameScene extends Container {
                 if (pathCells.some(pc => pc.x === c && pc.y === r)) continue;
                 
                 // Giảm mật độ đồ vật/quái trên bàn cờ lớn để đỡ rối mắt
-                const density = gs === 5 ? 1 : (gs === 7 ? 0.5 : 0.35);
+                const density = this.cols === 6 ? 1 : (this.cols === 8 ? 0.35 : 0.35);
                 
                 const rand = Math.random();
                 if (rand < 0.12 * density) {
@@ -295,8 +305,8 @@ export class GameScene extends Container {
             }
         }
         
-        for (let r = 0; r < gs; r++) {
-            for (let c = 0; c < gs; c++) {
+        for (let r = 0; r < this.rows; r++) {
+            for (let c = 0; c < this.cols; c++) {
                 const cell = new Graphics();
                 const size = this.cellSize + 0.5;
                 const offset = -size / 2;
@@ -307,8 +317,9 @@ export class GameScene extends Container {
                     .fill({ color: cellColor })
                     .stroke({ color: 0xCBC4D0, width: 1 });
                 
-                const gridW = this.gridSize * this.cellSize;
-                cell.position.set(c * this.cellSize - gridW / 2 + this.cellSize / 2, r * this.cellSize - gridW / 2 + this.cellSize / 2);
+                const gridW = this.cols * this.cellSize;
+                const gridH = this.rows * this.cellSize;
+                cell.position.set(c * this.cellSize - gridW / 2 + this.cellSize / 2, r * this.cellSize - gridH / 2 + this.cellSize / 2);
                 this.floorContainer.addChild(cell);
                 this.cellGraphics[r][c] = cell;
             }
@@ -519,9 +530,10 @@ export class GameScene extends Container {
     }
 
     getWorldPos(gridX, gridY) {
-        const gridW = this.gridSize * this.cellSize;
+        const gridW = this.cols * this.cellSize;
+        const gridH = this.rows * this.cellSize;
         const cartX = gridX * this.cellSize - gridW / 2 + this.cellSize / 2;
-        const cartY = gridY * this.cellSize - gridW / 2 + this.cellSize / 2;
+        const cartY = gridY * this.cellSize - gridH / 2 + this.cellSize / 2;
         return {
             x: cartX,
             y: cartY
@@ -553,7 +565,7 @@ export class GameScene extends Container {
         if (direction === 'right') targetX += 1;
 
         // Check bounds
-        if (targetX < 0 || targetX >= this.gridSize || targetY < 0 || targetY >= this.gridSize) {
+        if (targetX < 0 || targetX >= this.cols || targetY < 0 || targetY >= this.rows) {
             return;
         }
 
@@ -569,7 +581,7 @@ export class GameScene extends Container {
         if (this.bossEntity && !this.bossEntity.destroyed && targetEntity !== this.bossEntity) {
             this.bossEntity.power += 1;
             this.bossEntity.updatePowerBadge();
-            if (this.showFloatingText) this.showFloatingText(this.bossEntity, "+1", 0xFF0000);
+            if (this.showFloatingText) this.showFloatingText(this.bossEntity.x, this.bossEntity.y, "+1", 0xFF0000, false);
             bossGainedPower = true;
         }
 
@@ -605,12 +617,17 @@ export class GameScene extends Container {
             if (targetEntity.type === 'multiply') {
                 this.player.multiplyPower(targetEntity.power);
                 AudioManager.playLevelUpSFX();
+                this.showFloatingText(wPos.x, wPos.y, `x${targetEntity.power}`, 0xFFD700);
             } else if (targetEntity.type === 'divide') {
                 this.player.dividePower(targetEntity.power);
                 AudioManager.playCollectSFX();
+                this.showFloatingText(wPos.x, wPos.y, `/${targetEntity.power}`, 0x9C27B0);
             } else {
                 this.player.absorbPower(targetEntity.power);
                 AudioManager.playCollectSFX();
+                const sign = targetEntity.power > 0 ? "+" : "";
+                const color = targetEntity.power > 0 ? 0x00FF00 : 0xFF0000;
+                this.showFloatingText(wPos.x, wPos.y, `${sign}${targetEntity.power}`, color);
             }
             await targetEntity.collect();
 
@@ -629,6 +646,7 @@ export class GameScene extends Container {
             if (this.player.power > targetEntity.power) {
                 // Win! Absorb monster power
                 this.player.absorbPower(targetEntity.power);
+                this.showFloatingText(wPos.x, wPos.y, `+${targetEntity.power}`, 0x00FF00);
                 const isBoss = targetEntity.isBoss;
                 targetEntity.die();
 
@@ -647,6 +665,8 @@ export class GameScene extends Container {
                 }
             } else {
                 // Lose! (Retry puzzle floor)
+                this.player.spendPower(this.player.power); // Zero out for effect
+                this.showFloatingText(wPos.x, wPos.y, `Thất bại`, 0xFF0000);
                 this.handleDefeat();
                 return;
             }
@@ -660,7 +680,6 @@ export class GameScene extends Container {
             this.updateCellVisuals(prevY, prevX);
         }
 
-        this.lastMove = null;
         this.updateStatsUI();
         this.isProcessingSwipe = false;
     }
@@ -697,6 +716,11 @@ export class GameScene extends Container {
         this.player.gridY = move.prevY;
         this.grid[this.player.gridY][this.player.gridX] = this.player;
 
+        // Restore the previous cell state (remove wall)
+        this.tileStates[move.prevY][move.prevX] = 0;
+        this.walls[move.prevY][move.prevX] = false;
+        this.updateCellVisuals(move.prevY, move.prevX);
+
         const wPos = this.getWorldPos(move.prevX, move.prevY);
         await this.player.moveTo(wPos.x, wPos.y);
 
@@ -719,6 +743,12 @@ export class GameScene extends Container {
 
         this.updateStatsUI();
         this.isProcessingSwipe = false;
+    }
+
+    handleRestart() {
+        if (this.isProcessingSwipe) return;
+        this.player.resetPower(10);
+        this.generateLevel(this.floor);
     }
 
     handleDefeat() {
@@ -843,6 +873,7 @@ export class GameScene extends Container {
 
     revivePlayer() {
         this.inputBlocked = false;
+        this.player.resetPower(10);
         this.generateLevel(this.floor); // Restart current floor
     }
 
@@ -887,6 +918,7 @@ export class GameScene extends Container {
                 this.removeChild(this.settingsModal);
                 this.settingsModal = null;
                 this.isProcessingSwipe = false;
+                this.player.resetPower(10);
                 this.generateLevel(this.floor);
             },
             () => {
@@ -902,7 +934,46 @@ export class GameScene extends Container {
 
 
     updateStatsUI() {
-        this.statsBar.updateStats(this.floor, this.player.power);
+        if (this.statsBar) {
+            this.statsBar.updateStats(this.floor, this.player.power);
+            this.statsBar.forceUpdateRollbacks(this.freeRollbacks, this.lastMove !== null && !this.inputBlocked);
+        }
+    }
+
+    showFloatingText(startX, startY, textMsg, color, flyToPlayer = true) {
+        const txt = new Text({
+            text: textMsg,
+            style: new TextStyle({ fontFamily: "'Be Vietnam Pro', sans-serif", fill: color, fontSize: 28, fontWeight: '900', stroke: {color: 0xffffff, width: 5} })
+        });
+        txt.anchor.set(0.5);
+        txt.position.set(startX, startY);
+        this.gridContainer.addChild(txt);
+
+        if (flyToPlayer) {
+            // Fly towards player
+            gsap.to(txt.position, {
+                x: this.player.x,
+                y: this.player.y - 40,
+                duration: 0.8,
+                ease: "power2.out"
+            });
+        } else {
+            // Just float upwards
+            gsap.to(txt.position, {
+                y: startY - 40,
+                duration: 0.8,
+                ease: "power2.out"
+            });
+        }
+        
+        gsap.to(txt, {
+            alpha: 0,
+            duration: 0.8,
+            ease: "power2.in",
+            onComplete: () => {
+                if (!txt.destroyed) txt.destroy();
+            }
+        });
     }
 
     destroy(options) {

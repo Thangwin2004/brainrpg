@@ -26,7 +26,43 @@ export class Monster extends Container {
     }
     this.sprite.scale.set(scaleVal);
     
-    // Boss aura removed in favor of colored grid cell (GameScene)
+    // Boss Crown and Glow
+    if (this.isBoss) {
+      // Glow behind Boss
+      this.glow = new Graphics()
+        .circle(0, -10, 40)
+        .fill({ color: 0xFFD700, alpha: 0.3 });
+      this.addChild(this.glow);
+      
+      // Crown on top
+      this.crown = new Text({
+        text: '👑',
+        style: new TextStyle({ fontSize: 24 })
+      });
+      this.crown.anchor.set(0.5);
+      this.crown.position.set(0, -60);
+      this.addChild(this.crown);
+      
+      // Animate Crown
+      gsap.to(this.crown.scale, {
+        x: 1.2,
+        y: 1.2,
+        duration: 0.8,
+        yoyo: true,
+        repeat: -1,
+        ease: "sine.inOut"
+      });
+      
+      // Animate Glow
+      gsap.to(this.glow.scale, {
+        x: 1.1,
+        y: 1.1,
+        duration: 1,
+        yoyo: true,
+        repeat: -1,
+        ease: "sine.inOut"
+      });
+    }
 
     this.addChild(this.sprite);
     
