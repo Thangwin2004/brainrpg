@@ -1,5 +1,23 @@
 import { Container, Graphics, FillGradient, Text, TextStyle, BlurFilter } from 'pixi.js';
 import { IconBtn } from './Button.js';
+import { winkGame } from '../integrations/wink/wink-adapter.js';
+
+function getEffectiveUser() {
+  try {
+    const savedUser = localStorage.getItem("google_user");
+    if (savedUser) {
+      const parsed = JSON.parse(savedUser);
+      if (parsed && parsed.name) return parsed;
+    }
+  } catch (e) {}
+
+  if (winkGame && winkGame.isAuthenticated) {
+    return {
+      name: "Thành viên",
+    };
+  }
+  return null;
+}
 
 export class LeaderboardModal extends Container {
     constructor(onClose) {
@@ -198,7 +216,9 @@ export class LeaderboardModal extends Container {
         const myAvatar = new Graphics().circle(-110, 165, 14).fill({ color: 0xFFCA28 }).stroke({ color: 0xFFFFFF, width: 2 });
         this.modal.addChild(myAvatar);
         
-        const myName = new Text({ text: "Bạn (Khách)", style: new TextStyle({ ...rowStyle, fill: 0xFF8F00 }) });
+        const effUser = getEffectiveUser();
+        const playerName = effUser ? effUser.name : "Bạn (Khách)";
+        const myName = new Text({ text: playerName, style: new TextStyle({ ...rowStyle, fill: 0xFF8F00 }) });
         myName.anchor.set(0, 0.5);
         myName.position.set(-80, 165);
         

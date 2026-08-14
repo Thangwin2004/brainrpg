@@ -18,6 +18,31 @@ export class Player extends Container {
       .stroke({ color: 0xFFFFFF, width: 3 });
     this.addChild(this.frame);
     
+    // Heartbeat pulse for frame
+    gsap.to(this.frame.scale, {
+      x: 1.05,
+      y: 1.05,
+      duration: 0.6,
+      yoyo: true,
+      repeat: -1,
+      ease: "sine.inOut"
+    });
+
+    // "BẠN" Label
+    this.youLabel = new Text({
+      text: "BẠN",
+      style: new TextStyle({
+        fontFamily: "'Be Vietnam Pro', sans-serif",
+        fill: 0xFFFFFF,
+        fontSize: 10,
+        fontWeight: '900',
+        stroke: { color: 0x7E57C2, width: 3, join: 'round' }
+      })
+    });
+    this.youLabel.anchor.set(0.5);
+    this.youLabel.position.set(0, 36);
+    this.addChild(this.youLabel);
+    
     // Visuals
     const texture = AssetManager.getPlayerTexture();
     this.sprite = new Sprite(texture);
@@ -118,8 +143,6 @@ export class Player extends Container {
         if (!this.destroyed) this.sprite.y = 0;
       }
     });
-    
-    this.showFloatingText(amount > 0 ? `+${amount}` : `${amount}`, amount > 0 ? 0x00ff00 : 0xff0000);
   }
   
   multiplyPower(amount) {
@@ -146,8 +169,6 @@ export class Player extends Container {
         }
       }
     });
-    
-    this.showFloatingText(`x${amount}`, 0xFFD700);
   }
 
   dividePower(amount) {
@@ -169,8 +190,6 @@ export class Player extends Container {
         if (!this.destroyed) this.sprite.y = 0;
       }
     });
-    
-    this.showFloatingText(`/${amount}`, 0x9C27B0);
   }
   spendPower(amount) {
     this.power -= amount;
@@ -191,8 +210,6 @@ export class Player extends Container {
         if (!this.destroyed) this.sprite.y = 0;
       }
     });
-    
-    this.showFloatingText(`-${amount}`, 0xff4444);
   }
   
 
@@ -245,22 +262,5 @@ export class Player extends Container {
     });
   }
   
-  showFloatingText(msg, color) {
-    const txt = new Text({
-      text: msg,
-      style: new TextStyle({ fontFamily: "'Be Vietnam Pro', sans-serif", fill: color, fontSize: 24, fontWeight: '900', stroke: {color: 0xffffff, width: 4} })
-    });
-    txt.anchor.set(0.5);
-    txt.position.set(0, -30);
-    this.addChild(txt);
-    
-    gsap.to(txt, {
-      y: -80,
-      alpha: 0,
-      duration: 1,
-      onComplete: () => {
-        if (!txt.destroyed) txt.destroy();
-      }
-    });
-  }
+
 }

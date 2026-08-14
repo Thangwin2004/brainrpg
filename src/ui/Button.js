@@ -25,13 +25,14 @@ export class IconBtn extends Container {
     this.content.addChild(shadow, bg);
 
     // 3. SVG Icon (viewBox 24x24)
+    this.currentR = currentR;
     if (iconSvgString) {
-      const icon = new Graphics();
-      icon.svg(iconSvgString);
-      icon.pivot.set(12, 12); 
-      icon.scale.set((currentR * 1.2) / 24);
-      icon.y = 0;
-      this.content.addChild(icon);
+      this.iconGraphic = new Graphics();
+      this.iconGraphic.svg(iconSvgString);
+      this.iconGraphic.pivot.set(12, 12); 
+      this.iconGraphic.scale.set((currentR * 1.2) / 24);
+      this.iconGraphic.y = 0;
+      this.content.addChild(this.iconGraphic);
     }
 
     this.eventMode = 'static';
@@ -44,6 +45,20 @@ export class IconBtn extends Container {
     });
     this.on('pointerup', () => { this.scale.set(1); this.content.y = 0; if (onClick) onClick(); });
     this.on('pointerupoutside', () => { this.scale.set(1); this.content.y = 0; });
+  }
+
+  updateIcon(newSvgString) {
+    if (this.iconGraphic) {
+      this.iconGraphic.destroy();
+    }
+    if (newSvgString) {
+      this.iconGraphic = new Graphics();
+      this.iconGraphic.svg(newSvgString);
+      this.iconGraphic.pivot.set(12, 12); 
+      this.iconGraphic.scale.set((this.currentR * 1.2) / 24);
+      this.iconGraphic.y = 0;
+      this.content.addChild(this.iconGraphic);
+    }
   }
 }
 
