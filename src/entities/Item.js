@@ -46,7 +46,7 @@ export class Item extends Container {
     this.powerText = new Text({
       text: "", // Will be set by updatePowerBadge
       style: new TextStyle({
-        fontFamily: "'Quicksand', 'Be Vietnam Pro', sans-serif",
+        fontFamily: "'Be Vietnam Pro', sans-serif",
         fill: 0xffffff,
         fontSize: 11,
         fontWeight: '700'

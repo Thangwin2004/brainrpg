@@ -99,6 +99,24 @@ export class AudioManager {
         return this.isBgmMuted;
     }
 
+    static async pauseForFocus() {
+        if (!this.ctx) return;
+        this.wasContextRunningBeforeFocus = this.ctx.state === 'running';
+        this.wasBgmPlayingBeforeFocus = Boolean(this.bgm && !this.bgm.paused);
+        if (this.wasBgmPlayingBeforeFocus) this.bgm.pause();
+        if (this.wasContextRunningBeforeFocus) await this.ctx.suspend();
+    }
+
+    static async resumeFromFocus() {
+        if (!this.ctx) return;
+        if (this.wasContextRunningBeforeFocus) await this.ctx.resume();
+        this.wasContextRunningBeforeFocus = false;
+        if (this.wasBgmPlayingBeforeFocus && !this.isBgmMuted) {
+            await this.bgm.play().catch(() => {});
+        }
+        this.wasBgmPlayingBeforeFocus = false;
+    }
+
     static playBufferSFX(key, volume = 0.5) {
         if (!this.ctx || this.isSfxMuted) return;
         if (this.ctx.state === 'suspended') this.ctx.resume();

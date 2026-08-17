@@ -25,7 +25,7 @@ export class StatsBar extends Container {
     this.floorText = new Text({
       text: "TẦNG 1",
       style: new TextStyle({
-        fontFamily: ['Quicksand', 'Be Vietnam Pro', 'sans-serif'],
+        fontFamily: ['Be Vietnam Pro', 'sans-serif'],
         fill: 0x311B92,
         fontSize: 18,
         fontWeight: '900',
@@ -67,7 +67,7 @@ export class StatsBar extends Container {
     this.rollbackBadgeText = new Text({
       text: '3',
       style: new TextStyle({
-        fontFamily: ['Quicksand', 'Be Vietnam Pro', 'sans-serif'],
+        fontFamily: ['Be Vietnam Pro', 'sans-serif'],
         fill: 0xffffff,
         fontSize: 22,
         fontWeight: '700'
@@ -95,7 +95,7 @@ export class StatsBar extends Container {
     this.powerText = new Text({
       text: "⚡ 10",
       style: new TextStyle({
-        fontFamily: ['Quicksand', 'Be Vietnam Pro', 'sans-serif'],
+        fontFamily: ['Be Vietnam Pro', 'sans-serif'],
         fill: 0x311B92,
         fontSize: 24,
         fontWeight: '900',

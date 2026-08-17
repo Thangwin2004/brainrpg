@@ -11,9 +11,9 @@
   --shadow:
     rgba(0, 0, 0, 0.1) 0 10px 15px -3px, rgba(0, 0, 0, 0.05) 0 4px 6px -2px;
 
-  --sans: system-ui, 'Segoe UI', Roboto, sans-serif;
-  --heading: system-ui, 'Segoe UI', Roboto, sans-serif;
-  --mono: ui-monospace, Consolas, monospace;
+  --sans: 'Be Vietnam Pro', sans-serif;
+  --heading: 'Be Vietnam Pro', sans-serif;
+  --mono: 'Be Vietnam Pro', sans-serif;
 
   font: 18px/145% var(--sans);
   letter-spacing: 0.18px;
@@ -56,7 +56,7 @@ body {
 
 h1,
 h2 {
-  font-family: var(--heading);
+  font-family:'Be Vietnam Pro', sans-serif;
   font-weight: 500;
   color: var(--text-h);
 }
@@ -85,7 +85,7 @@ p {
 
 code,
 .counter {
-  font-family: var(--mono);
+  font-family:'Be Vietnam Pro', sans-serif;
   display: inline-flex;
   border-radius: 4px;
   color: var(--text-h);

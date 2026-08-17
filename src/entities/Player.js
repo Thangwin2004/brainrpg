@@ -67,7 +67,7 @@ export class Player extends Container {
 
     this.powerText = new Text({
       text: `${this.power}`,
-      style: new TextStyle({ fontFamily: "'Quicksand', 'Be Vietnam Pro', sans-serif", fill: 0xffffff, fontSize: 11, fontWeight: '700' })
+      style: new TextStyle({ fontFamily: "'Be Vietnam Pro', sans-serif", fill: 0xffffff, fontSize: 11, fontWeight: '700' })
     });
     this.powerText.anchor.set(0.5);
     this.powerText.position.set(21, -23);
