@@ -1,5 +1,9 @@
+import { Ticker } from 'pixi.js';
 import { Game } from './core/Game.js';
+import { AudioManager } from './managers/AudioManager.js';
+import { winkGame } from './integrations/wink/wink-adapter.js';
 import { waitForGameFonts } from './utils/fontLoader.js';
+import { installFocusPause } from './utils/focusPause.js';
 
 window.onload = async () => {
   await waitForGameFonts([
@@ -15,4 +19,19 @@ window.onload = async () => {
 
   const game = new Game();
   await game.init();
+
+  const focusPause = installFocusPause({
+    isRunning: () => Boolean(Ticker.shared.started),
+    pause: () => Ticker.shared.stop(),
+    resume: () => Ticker.shared.start(),
+    pauseAudio: () => AudioManager.pauseForFocus(),
+    resumeAudio: () => AudioManager.resumeFromFocus(),
+  });
+
+  winkGame.bindLifecycle({
+    onPause: focusPause.pauseFromHost,
+    onResume: focusPause.resumeFromHost,
+    onMute: () => AudioManager.setParentMuted?.(true),
+    onUnmute: () => AudioManager.setParentMuted?.(false),
+  });
 };
