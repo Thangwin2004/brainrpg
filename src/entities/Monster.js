@@ -75,7 +75,7 @@ export class Monster extends Container {
     // Stats UI (Power Badge - Top Right Pill)
     this.powerText = new Text({
       text: `${this.power}`, 
-      style: new TextStyle({ fontFamily: "'Quicksand', 'Be Vietnam Pro', sans-serif", fill: 0xffffff, fontSize: 11, fontWeight: '700' })
+      style: new TextStyle({ fontFamily: "'Be Vietnam Pro', sans-serif", fill: 0xffffff, fontSize: 11, fontWeight: '700' })
     });
     this.powerText.anchor.set(0.5);
     

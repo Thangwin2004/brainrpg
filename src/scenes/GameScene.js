@@ -765,7 +765,7 @@ export class GameScene extends Container {
         overlay.style.cssText = 'position:fixed;top:0;left:0;width:100dvw;height:100dvh;background:rgba(0,0,0,0.75);backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px);display:flex;align-items:center;justify-content:center;z-index:10000;';
 
         const card = document.createElement('div');
-        card.style.cssText = 'background:#ffffff;border-radius:28px;width:340px;padding:32px 24px;display:flex;flex-direction:column;align-items:center;text-align:center;box-sizing:border-box;font-family:Quicksand,"Be Vietnam Pro",sans-serif;box-shadow:0 20px 50px rgba(126,87,194,0.3);';
+        card.style.cssText = 'background:#ffffff;border-radius:28px;width:340px;padding:32px 24px;display:flex;flex-direction:column;align-items:center;text-align:center;box-sizing:border-box;font-family:Be Vietnam Pro, sans-serif;box-shadow:0 20px 50px rgba(126,87,194,0.3);';
 
         const handleResize = () => {
             const scale = Math.min(1.0, (window.innerWidth - 30) / 360, (window.innerHeight - 30) / 520);
@@ -805,7 +805,7 @@ export class GameScene extends Container {
                 background: linear-gradient(to bottom, #FF8A80, #E57373);
                 box-shadow: 0 4px 0 #D32F2F, 0 8px 20px rgba(126,87,194,0.15);
                 color: #ffffff;
-                font-family: Quicksand,'Be Vietnam Pro',sans-serif;
+                font-family:'Be Vietnam Pro', sans-serif;
                 font-size: 22px;
                 font-weight: 700;
                 display: flex;

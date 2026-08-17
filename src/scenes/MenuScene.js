@@ -48,7 +48,7 @@ export class MenuScene extends Container {
     this.titleText = new Text({
       text: "HÀNH TRÌNH\nBỘ LẠC",
       style: new TextStyle({ 
-        fontFamily: ['Quicksand', 'Be Vietnam Pro', 'sans-serif'],
+        fontFamily: ['Baloo 2', 'Be Vietnam Pro', 'sans-serif'],
         fill: 0xFFFFFF, 
         fontSize: 52, 
         fontWeight: '900', 
@@ -62,9 +62,21 @@ export class MenuScene extends Container {
     this.titleContainer.addChild(this.titleText);
     
     // 4. Main Play Button (Capsule, Warm Gold)
-    this.playBtn = new CapsuleBtn("CHƠI NGAY", () => {
+    this.playBtn = new CapsuleBtn("CHƠI NGAY", async () => {
+      if (this.startingGame) return;
+      this.startingGame = true;
+      this.playBtn.eventMode = 'none';
+      this.playBtn.alpha = 0.65;
       AudioManager.playBGM();
-      this.game.setScene(new GameScene());
+      try {
+        await AssetManager.ensureGameplayAssets();
+        this.game.setScene(new GameScene());
+      } catch (error) {
+        console.error('Không thể tải asset trận đấu:', error);
+        this.startingGame = false;
+        this.playBtn.eventMode = 'static';
+        this.playBtn.alpha = 1;
+      }
     }, 220, 64, '#FFD54F', '#FFCA28', '#FFB300'); // Warm Gold palette
     this.playBtn.position.set(width / 2, height * 0.55);
     this.addChild(this.playBtn);
@@ -117,7 +129,7 @@ export class MenuScene extends Container {
     this.loadingText = new Text({
       text: "Loading 0%",
       style: new TextStyle({
-        fontFamily: ['Quicksand', 'Be Vietnam Pro', 'sans-serif'],
+        fontFamily: ['Be Vietnam Pro', 'sans-serif'],
         fill: 0xffffff,
         fontSize: 14,
         fontWeight: '700'
@@ -130,7 +142,7 @@ export class MenuScene extends Container {
     this.subText = new Text({
       text: "Tải tài nguyên...",
       style: new TextStyle({
-        fontFamily: ['Quicksand', 'Be Vietnam Pro', 'sans-serif'],
+        fontFamily: ['Be Vietnam Pro', 'sans-serif'],
         fill: 0xEDE7F6,
         fontSize: 12
       })

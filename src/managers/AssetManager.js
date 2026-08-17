@@ -60,42 +60,51 @@ export const ITEM_FILES = [
 export const MAIN_CHAR_FILE = "010_avatar_echxanh1.png";
 
 export class AssetManager {
+  static gameplayLoadPromise = null;
+
   static async init(onProgress) {
     const manifest = {
       bundles: [
         {
-          name: 'avatars',
+          name: 'gameplay',
           assets: AVATAR_FILES.map(file => ({
             alias: file,
             src: `/assets/image/imagenobackgrd/${file}`
-          }))
-        },
-        {
-          name: 'items',
-          assets: ITEM_FILES.map(file => ({
+          })).concat(ITEM_FILES.map(file => ({
             alias: file,
             src: `/assets/image/items/${file}`
-          }))
-        },
-        {
-          name: 'backgrounds',
-          assets: [
-            { alias: 'bg_menu', src: '/assets/image/backgrounds/bg_menu.png' },
+          })), [
             { alias: 'bg_game', src: '/assets/image/backgrounds/bg_game.png' },
             { alias: 'bg_gameover', src: '/assets/image/backgrounds/bg_gameover.png' }
+          ])
+        },
+        {
+          name: 'menu',
+          assets: [
+            { alias: 'bg_menu', src: '/assets/image/backgrounds/bg_menu.png' }
           ]
         }
       ]
     };
     
     await Assets.init({ manifest });
-    await Assets.loadBundle(['avatars', 'items', 'backgrounds'], onProgress);
+    await Assets.loadBundle('menu', onProgress);
     
     // Initialize audio system and preload SFX buffers
     AudioManager.init();
     
     // We can filter out the main character and kicked versions for the monsters pool
     this.monsterAvatars = AVATAR_FILES.filter(f => f !== MAIN_CHAR_FILE && !f.includes('_kicked'));
+  }
+
+  static async ensureGameplayAssets(onProgress) {
+    if (!this.gameplayLoadPromise) {
+      this.gameplayLoadPromise = Assets.loadBundle('gameplay', onProgress).catch((error) => {
+        this.gameplayLoadPromise = null;
+        throw error;
+      });
+    }
+    return this.gameplayLoadPromise;
   }
   
   static getRandomMonsterTexture() {
