@@ -4,6 +4,9 @@ import { AudioManager } from './managers/AudioManager.js';
 import { winkGame } from './integrations/wink/wink-adapter.js';
 import { waitForGameFonts } from './utils/fontLoader.js';
 import { installFocusPause } from './utils/focusPause.js';
+import { installInteractionGuard } from './utils/interactionGuard.js';
+
+installInteractionGuard();
 
 window.onload = async () => {
   await waitForGameFonts([
