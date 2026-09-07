@@ -98,6 +98,7 @@ export class CapsuleBtn extends Container {
       })
     });
     label.anchor.set(0.5);
+    this.label = label;
     this.content.addChild(label);
 
     this.eventMode = 'static';
@@ -110,5 +111,15 @@ export class CapsuleBtn extends Container {
     });
     this.on('pointerup', () => { this.scale.set(1); this.content.y = 0; if (onClick) onClick(); });
     this.on('pointerupoutside', () => { this.scale.set(1); this.content.y = 0; });
+  }
+
+  setText(newText) {
+    if (this.label && !this.label.destroyed) {
+      this.label.text = newText;
+    }
+  }
+
+  get text() {
+    return this.label;
   }
 }

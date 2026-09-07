@@ -1,5 +1,6 @@
 import { Container, Sprite, Text, TextStyle, Graphics, Assets } from 'pixi.js';
 import { AssetManager, MAIN_CHAR_FILE } from '../managers/AssetManager.js';
+import { i18n } from '../system/I18nManager.js';
 import gsap from 'gsap';
 
 export class Player extends Container {
@@ -28,9 +29,9 @@ export class Player extends Container {
       ease: "sine.inOut"
     });
 
-    // "BẠN" Label
+    // "YOU" / "BẠN" Label
     this.youLabel = new Text({
-      text: "BẠN",
+      text: i18n.currentLanguage === "en" ? "YOU" : "BẠN",
       style: new TextStyle({
         fontFamily: "'Be Vietnam Pro', sans-serif",
         fill: 0xFFFFFF,
@@ -42,6 +43,12 @@ export class Player extends Container {
     this.youLabel.anchor.set(0.5);
     this.youLabel.position.set(0, 36);
     this.addChild(this.youLabel);
+
+    this._unsubI18n = i18n.subscribe((lang) => {
+      if (this.youLabel && !this.youLabel.destroyed) {
+        this.youLabel.text = lang === "en" ? "YOU" : "BẠN";
+      }
+    });
     
     // Visuals
     const texture = AssetManager.getPlayerTexture();
@@ -211,8 +218,6 @@ export class Player extends Container {
     });
   }
   
-
-  
   resetPower(val = 10) {
       gsap.killTweensOf(this.sprite);
       gsap.killTweensOf(this.sprite.scale);
@@ -257,8 +262,11 @@ export class Player extends Container {
     });
   }
   
-
   destroy(options) {
+    if (this._unsubI18n) {
+      this._unsubI18n();
+      this._unsubI18n = null;
+    }
     gsap.killTweensOf(this.position);
     gsap.killTweensOf(this.frame.scale);
     gsap.killTweensOf(this.sprite);

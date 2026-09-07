@@ -20,7 +20,7 @@ function getEffectiveUser() {
 
   if (winkGame && winkGame.isAuthenticated) {
     return {
-      name: "Thành viên",
+      name: t("leaderboard.defaultMember"),
     };
   }
   return null;
@@ -256,7 +256,7 @@ export class LeaderboardModal extends Container {
 
         const updateFooter = (pb) => {
             const activeUser = getEffectiveUser();
-            const pName = pb?.displayName || (activeUser ? activeUser.name : (winkGame?.isAuthenticated ? "Thành viên" : "Bạn (Khách)"));
+            const pName = pb?.displayName || (activeUser ? activeUser.name : (winkGame?.isAuthenticated ? t("leaderboard.defaultMember") : t("leaderboard.youGuest")));
             const pScore = pb?.score !== undefined && pb?.score !== null ? pb.score : myScoreLocal;
             const rankNum = pb?.rank || (pScore > 0 ? 1 : 0);
             const rankStr = rankNum > 0 ? (rankNum === 1 ? "🥇" : rankNum === 2 ? "🥈" : rankNum === 3 ? "🥉" : `#${rankNum}`) : "—";
@@ -277,7 +277,7 @@ export class LeaderboardModal extends Container {
             ]).then(([lbRes, pbRes]) => {
                 if (lbRes && Array.isArray(lbRes.entries) && lbRes.entries.length > 0) {
                     const apiEntries = lbRes.entries.map((item, idx) => ({
-                        name: item.displayName || item.name || `Thành viên #${item.rank || idx + 1}`,
+                        name: item.displayName || item.name || t("leaderboard.defaultMemberNumber", { rank: item.rank || idx + 1 }),
                         score: item.score || 0,
                         rank: item.rank || idx + 1,
                     }));

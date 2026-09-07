@@ -144,7 +144,7 @@ export class MenuScene extends Container {
     this.loadingContainer.addChild(this.loadingText);
     
     this.subText = new Text({
-      text: "Tải tài nguyên...",
+      text: i18n.currentLanguage === "en" ? "Loading resources..." : "Tải tài nguyên...",
       style: new TextStyle({
         fontFamily: ['Be Vietnam Pro', 'sans-serif'],
         fill: 0xEDE7F6,
@@ -170,7 +170,7 @@ export class MenuScene extends Container {
       this.game.app.ticker.remove(this.updateFn);
     });
     
-    this.updateProgress(0, "Tải tài nguyên...");
+    this.updateProgress(0, i18n.currentLanguage === "en" ? "Loading resources..." : "Tải tài nguyên...");
     this.loadAssetsAndLogin();
   }
 
@@ -222,19 +222,21 @@ export class MenuScene extends Container {
 
   async loadAssetsAndLogin() {
     // 1. Tải Asset (0% -> 60%)
-    this.updateProgress(0.05, "Tải tài nguyên...");
+    const resMsg = i18n.currentLanguage === "en" ? "Loading resources..." : "Tải tài nguyên...";
+    this.updateProgress(0.05, resMsg);
     await AssetManager.init((progress) => {
-      this.updateProgress(0.05 + progress * 0.55, "Tải tài nguyên...");
+      this.updateProgress(0.05 + progress * 0.55, resMsg);
     });
     
     // 2. Giả lập Đăng nhập API (60% -> 100%)
+    const loginMsg = i18n.currentLanguage === "en" ? "Signing in API (Google)..." : "Đăng nhập API (Google)...";
     const startTime = Date.now();
     const duration = 600; // 0.6s
     await new Promise(resolve => {
       const interval = setInterval(() => {
         const elapsed = Date.now() - startTime;
         const ratio = Math.min(1, elapsed / duration);
-        this.updateProgress(0.6 + ratio * 0.4, "Đăng nhập API (Google)...");
+        this.updateProgress(0.6 + ratio * 0.4, loginMsg);
         if (ratio >= 1) {
           clearInterval(interval);
           resolve();
@@ -307,7 +309,9 @@ export class MenuScene extends Container {
     if (this.titleText && !this.titleText.destroyed) {
       this.titleText.text = t("game.title");
     }
-    if (this.playBtn && this.playBtn.text && !this.playBtn.text.destroyed) {
+    if (this.playBtn && typeof this.playBtn.setText === "function") {
+      this.playBtn.setText(t("menu.play"));
+    } else if (this.playBtn && this.playBtn.text && !this.playBtn.text.destroyed) {
       this.playBtn.text.text = t("menu.play");
     }
     if (this.loadingText && !this.loadingText.destroyed && this._lastProgress !== undefined) {

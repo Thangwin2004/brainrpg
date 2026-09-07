@@ -67,6 +67,7 @@ const messages = {
     "gameover.title": "GAME OVER",
     "gameover.newRecord": "NEW RECORD!",
     "gameover.highestFloor": "HIGHEST FLOOR: {floor}",
+    "gameover.best": "Best: {floor}",
     "gameover.tryAgain": "Great effort! Give it another shot!",
 
     "leaderboard.title": "LEADERBOARD",
@@ -150,6 +151,7 @@ const messages = {
     "gameover.title": "KẾT THÚC",
     "gameover.newRecord": "KỶ LỤC MỚI!",
     "gameover.highestFloor": "TẦNG CAO NHẤT: {floor}",
+    "gameover.best": "Kỷ lục: {floor}",
     "gameover.tryAgain": "Chơi rất tốt! Hãy cố gắng ở lượt sau nhé!",
 
     "leaderboard.title": "BẢNG XẾP HẠNG",
@@ -195,14 +197,6 @@ function readUrlLanguage() {
   }
 }
 
-function readBrowserLanguage() {
-  const candidates = [
-    ...(globalThis.navigator?.languages || []),
-    globalThis.navigator?.language,
-  ];
-  return candidates.map(normalizeLanguage).find(Boolean) || "en";
-}
-
 function readWinkLanguage(state) {
   return normalizeLanguage(
     state?.locale ||
@@ -218,7 +212,6 @@ class I18nManager {
     this.language =
       readStoredLanguage() ||
       readUrlLanguage() ||
-      readBrowserLanguage() ||
       "en";
     this.listeners = new Set();
     this.applyDocumentLanguage();

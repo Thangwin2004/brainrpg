@@ -128,42 +128,50 @@ export class SettingsModal extends Container {
     let homeBtn = null;
     let restartBtn = null;
 
-    // Language row (marth3 style)
-    const createLanguageRow = () => {
-      const row = document.createElement('div');
-      row.className = 'game-settings-language-row';
+    // Only display language selection in main menu settings, not in-game pause modal
+    const isIngame = Boolean(this.onRestart || this.onHome);
+    if (!isIngame) {
+      const createLanguageRow = () => {
+        const row = document.createElement('div');
+        row.className = 'game-settings-language-row';
 
-      const label = document.createElement('span');
-      label.className = 'game-settings-label';
-      label.innerText = t('settings.language');
+        const label = document.createElement('span');
+        label.className = 'game-settings-label';
+        label.innerText = '🌐 ' + t('settings.language');
 
-      const select = document.createElement('select');
-      select.className = 'game-settings-language-select';
-      select.setAttribute('aria-label', t('settings.language'));
-      select.innerHTML = `
-        <option value="en">${t('settings.english')}</option>
-        <option value="vi">${t('settings.vietnamese')}</option>
-      `;
-      select.value = i18n.language;
-
-      select.addEventListener('change', () => {
-        AudioManager.playClickSFX();
-        i18n.setLanguage(select.value);
-        title.innerText = t('settings.title');
-        musicRow.labelElement.innerText = '🎵 ' + t('settings.music');
-        sfxRow.labelElement.innerText = '🔊 ' + t('settings.sfx');
-        label.innerText = t('settings.language');
+        const select = document.createElement('select');
+        select.className = 'game-settings-language-select';
         select.setAttribute('aria-label', t('settings.language'));
-        if (versionText) versionText.innerText = t('settings.version');
-        if (closeBtn) closeBtn.setAttribute('aria-label', t('actions.cancel'));
-        if (restartBtn) restartBtn.setAttribute('aria-label', t('actions.replay'));
-        if (homeBtn) homeBtn.setAttribute('aria-label', t('actions.home'));
-      });
+        select.innerHTML = `
+          <option value="en">${t('settings.english')}</option>
+          <option value="vi">${t('settings.vietnamese')}</option>
+        `;
+        select.value = i18n.language;
 
-      row.append(label, select);
-      return row;
-    };
-    rowContainer.appendChild(createLanguageRow());
+        select.addEventListener('change', () => {
+          AudioManager.playClickSFX();
+          i18n.setLanguage(select.value);
+          title.innerText = t('settings.title');
+          musicRow.labelElement.innerText = '🎵 ' + t('settings.music');
+          sfxRow.labelElement.innerText = '🔊 ' + t('settings.sfx');
+          label.innerText = '🌐 ' + t('settings.language');
+          select.setAttribute('aria-label', t('settings.language'));
+          select.innerHTML = `
+            <option value="en">${t('settings.english')}</option>
+            <option value="vi">${t('settings.vietnamese')}</option>
+          `;
+          select.value = i18n.language;
+          if (versionText) versionText.innerText = t('settings.version');
+          if (closeBtn) closeBtn.setAttribute('aria-label', t('actions.cancel'));
+          if (restartBtn) restartBtn.setAttribute('aria-label', t('actions.replay'));
+          if (homeBtn) homeBtn.setAttribute('aria-label', t('actions.home'));
+        });
+
+        row.append(label, select);
+        return row;
+      };
+      rowContainer.appendChild(createLanguageRow());
+    }
 
     card.appendChild(rowContainer);
 

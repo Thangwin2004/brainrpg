@@ -3,7 +3,7 @@ import { IconBtn } from '../ui/Button.js';
 import { GameScene } from './GameScene.js';
 import { MenuScene } from './MenuScene.js';
 import { AssetManager } from '../managers/AssetManager.js';
-import { t } from '../system/I18nManager.js';
+import { i18n, t } from '../system/I18nManager.js';
 import gsap from 'gsap';
 
 export class GameOverScene extends Container {
@@ -184,8 +184,9 @@ export class GameOverScene extends Container {
 
     // Best Score line
     const bestFloor = parseInt(localStorage.getItem('swipeRpgMaxFloor')) || 1;
+    const bestLabel = t("gameover.best", { floor: bestFloor });
     const bestText = new Text({
-      text: `Tốt nhất: ${bestFloor}`,
+      text: bestLabel,
       style: new TextStyle({
         fontFamily: ['Be Vietnam Pro', 'sans-serif'],
         fontSize: 14,

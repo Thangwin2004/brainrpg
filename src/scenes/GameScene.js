@@ -87,6 +87,15 @@ export class GameScene extends Container {
         this.player = new Player();
         this.gridContainer.addChild(this.player);
 
+        this._stopLanguageObserver = i18n.subscribe(() => {
+            if (!this.destroyed) {
+                this.updateStatsUI();
+                if (this.statsBar && typeof this.statsBar.applyLanguage === "function") {
+                    this.statsBar.applyLanguage();
+                }
+            }
+        });
+
         this.generateLevel(this.floor);
     }
 
@@ -475,7 +484,9 @@ export class GameScene extends Container {
 
         // Check walls
         if (this.walls[targetY][targetX]) {
-            this.statusText.text = 'Ô này đã sập. Chọn hướng khác hoặc hoàn tác.';
+            this.statusText.text = i18n.currentLanguage === "en"
+                ? 'This tile collapsed. Choose another direction or undo.'
+                : 'Ô này đã sập. Chọn hướng khác hoặc hoàn tác.';
             return;
         }
 
@@ -549,7 +560,9 @@ export class GameScene extends Container {
                     this.moveHistory = [];
                     this.turnCount++;
                     this.updateStatsUI();
-                    this.statusText.text = 'Đã thắng! Tầng tiếp theo bắt đầu với 10 sức mạnh.';
+                    this.statusText.text = i18n.currentLanguage === "en"
+                        ? 'Victory! Next floor starts with 10 power.'
+                        : 'Đã thắng! Tầng tiếp theo bắt đầu với 10 sức mạnh.';
                     this.schedule(() => this.nextFloor(), 700);
                     return; // Input stays locked throughout the transition.
                 }
@@ -572,7 +585,9 @@ export class GameScene extends Container {
 
         this.updateStatsUI();
         if (this.player.power <= 0 || !hasSafeMove(this.grid, this.walls, this.player.gridX, this.player.gridY, this.player.power)) {
-            this.handleDefeat(this.player.power <= 0 ? 'Bẫy đã làm sức mạnh về 0.' : 'Không còn nước đi an toàn.');
+            const trapReason = i18n.currentLanguage === "en" ? 'Trap reduced power to 0.' : 'Bẫy đã làm sức mạnh về 0.';
+            const noMoveReason = i18n.currentLanguage === "en" ? 'No safe moves left.' : 'Không còn nước đi an toàn.';
+            this.handleDefeat(this.player.power <= 0 ? trapReason : noMoveReason);
             return;
         }
         this.isProcessingSwipe = false;
@@ -593,7 +608,9 @@ export class GameScene extends Container {
         this.updateRollbackUI();
 
         if (paid) {
-            this.statusText.text = 'Đang chờ quảng cáo để hoàn tác 1 bước…';
+            this.statusText.text = i18n.currentLanguage === "en"
+                ? 'Waiting for ad to undo 1 step…'
+                : 'Đang chờ quảng cáo để hoàn tác 1 bước…';
             let success = false;
             try { success = await AdManager.showRewardedVideo(); } catch { /* Keep the turn available for retry. */ }
             if (this.destroyed || revision !== this.levelRevision) return;
@@ -602,7 +619,9 @@ export class GameScene extends Container {
                 this.isProcessingSwipe = recovering;
                 this.updateRollbackUI();
                 if (recovering) this.showReviveOffer(t("revive.adFailed"));
-                else this.statusText.text = 'Chưa nhận được lượt hoàn tác. Bàn cờ và lịch sử được giữ nguyên.';
+                else this.statusText.text = i18n.currentLanguage === "en"
+                    ? 'Could not claim undo. Board and history kept intact.'
+                    : 'Chưa nhận được lượt hoàn tác. Bàn cờ và lịch sử được giữ nguyên.';
                 return;
             }
         }
@@ -619,7 +638,9 @@ export class GameScene extends Container {
         this.rollbackBusy = false;
         this.isProcessingSwipe = false;
         this.updateStatsUI();
-        this.statusText.text = 'Đã lùi 1 bước · ' + this.moveHistory.length + ' bước trong lịch sử · ' + this.freeRollbacks + ' lượt miễn phí';
+        this.statusText.text = i18n.currentLanguage === "en"
+            ? `Rewound 1 step · ${this.moveHistory.length} steps in history · ${this.freeRollbacks} free left`
+            : `Đã lùi 1 bước · ${this.moveHistory.length} bước trong lịch sử · ${this.freeRollbacks} lượt miễn phí`;
     }
 
     restoreTurn(snapshot) {
@@ -661,7 +682,7 @@ export class GameScene extends Container {
         this.generateLevel(this.floor);
     }
 
-    handleDefeat(reason = 'Cần sức mạnh lớn hơn đối thủ để thắng.') {
+    handleDefeat(reason = (i18n.currentLanguage === "en" ? 'Need more power than opponent to win.' : 'Cần sức mạnh lớn hơn đối thủ để thắng.')) {
         this.inputBlocked = true;
         this.isProcessingSwipe = true;
         this.defeatReason = reason;
@@ -870,7 +891,11 @@ export class GameScene extends Container {
         if (this.statsBar) {
             this.statsBar.updateStats(this.floor, this.player.power);
             this.updateRollbackUI();
-            this.statusText.text = 'Boss ' + this.levelLayout.bossPower + ' · Cần > ' + this.levelLayout.bossPower + ' · ' + this.turnCount + ' bước\nVuốt / phím mũi tên · Ô đỏ: nguy hiểm · Rời ô là sập';
+            const bp = this.levelLayout.bossPower;
+            const tc = this.turnCount;
+            this.statusText.text = i18n.currentLanguage === "en"
+                ? `Boss ${bp} · Need > ${bp} · ${tc} steps\nSwipe / arrow keys · Red: danger · Tile collapses after exit`
+                : `Boss ${bp} · Cần > ${bp} · ${tc} bước\nVuốt / phím mũi tên · Ô đỏ: nguy hiểm · Rời ô là sập`;
             for (let y = 0; y < this.rows; y++) {
                 for (let x = 0; x < this.cols; x++) this.updateCellVisuals(y, x);
             }
