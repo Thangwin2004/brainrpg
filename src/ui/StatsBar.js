@@ -1,6 +1,7 @@
 import { Container, Graphics, FillGradient, Text, TextStyle } from 'pixi.js';
 import { IconBtn } from './Button.js';
 import { RollbackButton } from './RollbackButton.js';
+import { t } from '../system/I18nManager.js';
 
 export class StatsBar extends Container {
   constructor(width, onOpenSettings, onRestart) {
@@ -12,6 +13,7 @@ export class StatsBar extends Container {
     this._pillH = 44;    // pill height for both rows
     this._pillR = 22;    // pill border-radius
     this._btnSize = 24;  // icon button size
+    this._currentFloor = 1;
 
     // ═══════════════════════════════════════
     // ROW 1: Floor pill (left) + buttons (right)
@@ -24,7 +26,7 @@ export class StatsBar extends Container {
     this.floorContainer.addChild(this.floorShadow, this.floorBg);
 
     this.floorText = new Text({
-      text: "TẦNG 1",
+      text: t("hud.floor", { floor: 1 }),
       style: new TextStyle({
         fontFamily: ['Be Vietnam Pro', 'sans-serif'],
         fill: 0x311B92,
@@ -158,8 +160,16 @@ export class StatsBar extends Container {
   }
 
   updateStats(floor, power) {
-    this.floorText.text = `TẦNG ${floor}`;
+    this._currentFloor = floor;
+    this._currentPower = power;
+    this.floorText.text = t("hud.floor", { floor });
     this.powerText.text = `⚡ ${power}`;
+  }
+
+  applyLanguage() {
+    if (this.floorText && !this.floorText.destroyed) {
+      this.floorText.text = t("hud.floor", { floor: this._currentFloor || 1 });
+    }
   }
 
   forceUpdateRollbacks(count, historySize, blocked = false, busy = false) {

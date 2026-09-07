@@ -23,6 +23,16 @@ const messages = {
     "hud.bossFloor": "FLOOR {floor} · BOSS BATTLE!",
     "hud.defeat": "DEFEAT",
 
+    "rollback.title": "UNDO",
+    "rollback.busy": "PROCESSING",
+    "rollback.loadingAd": "Loading advertisement…",
+    "rollback.rewinding": "Rewinding 1 step…",
+    "rollback.empty": "No steps to undo",
+    "rollback.blocked": "Action temporarily locked",
+    "rollback.freeDetail": "Undo 1 step · Free",
+    "rollback.adDetail": "Watch Ad · Undo 1 step",
+    "rollback.adBadge": "AD",
+
     "tutorial.title": "HOW TO PLAY",
     "tutorial.rule1": "👆 Swipe on the board or use arrow keys. Move 1 cell per step.",
     "tutorial.rule2": "⚔️ You must be STRONGER than a monster to win and absorb its power. Ties lose.",
@@ -95,6 +105,16 @@ const messages = {
     "hud.rollbackBlocked": "LÙI LƯỢT",
     "hud.bossFloor": "TẦNG {floor} · TRẬN ĐÁNH TRÙM!",
     "hud.defeat": "THẤT BẠI",
+
+    "rollback.title": "HOÀN TÁC",
+    "rollback.busy": "ĐANG XỬ LÝ",
+    "rollback.loadingAd": "Đang tải quảng cáo…",
+    "rollback.rewinding": "Đang lùi 1 bước…",
+    "rollback.empty": "Chưa có bước để lùi",
+    "rollback.blocked": "Tạm khóa thao tác",
+    "rollback.freeDetail": "Lùi 1 bước · Miễn phí",
+    "rollback.adDetail": "Xem QC · Lùi 1 bước",
+    "rollback.adBadge": "QC",
 
     "tutorial.title": "HƯỚNG DẪN TÂN THỦ",
     "tutorial.rule1": "👆 Vuốt trên bàn hoặc dùng phím mũi tên. Mỗi lần đi 1 ô.",

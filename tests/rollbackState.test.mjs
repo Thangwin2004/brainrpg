@@ -27,7 +27,10 @@ test('turn snapshots preserve all mutable board state and identity of artwork', 
     assert.equal(snapshot.entities.length, 2); // Neither player nor empty cells become entities.
 });
 
+import { i18n } from '../src/system/I18nManager.js';
+
 test('rollback labels distinguish empty history, remaining free uses, ads and locks', () => {
+    i18n.setLanguage('vi');
     assert.deepEqual(rollbackPresentation({ count: 3, historySize: 0 }), {
         enabled: false, badge: '3', mode: 'empty', title: 'HOÀN TÁC', detail: 'Chưa có bước để lùi',
     });
@@ -46,4 +49,14 @@ test('rollback labels distinguish empty history, remaining free uses, ads and lo
     assert.equal(busy.mode, 'busy');
     assert.match(busy.detail, /quảng cáo/);
     assert.match(rollbackPresentation({ count: 0, historySize: 4, busy: 'undo' }).detail, /Đang lùi/);
+
+    // English assertions
+    i18n.setLanguage('en');
+    const freeEn = rollbackPresentation({ count: 2, historySize: 4 });
+    assert.equal(freeEn.enabled, true);
+    assert.equal(freeEn.title, 'UNDO');
+    assert.match(freeEn.detail, /Free/);
+    const adEn = rollbackPresentation({ count: 0, historySize: 4 });
+    assert.equal(adEn.badge, 'AD');
+    assert.match(adEn.detail, /Watch Ad/);
 });

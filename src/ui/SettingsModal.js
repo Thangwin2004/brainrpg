@@ -154,11 +154,6 @@ export class SettingsModal extends Container {
         sfxRow.labelElement.innerText = '🔊 ' + t('settings.sfx');
         label.innerText = t('settings.language');
         select.setAttribute('aria-label', t('settings.language'));
-        select.innerHTML = `
-          <option value="en">${t('settings.english')}</option>
-          <option value="vi">${t('settings.vietnamese')}</option>
-        `;
-        select.value = i18n.language;
         if (versionText) versionText.innerText = t('settings.version');
         if (closeBtn) closeBtn.setAttribute('aria-label', t('actions.cancel'));
         if (restartBtn) restartBtn.setAttribute('aria-label', t('actions.replay'));

@@ -1,3 +1,5 @@
+import { t } from '../system/I18nManager.js';
+
 // Texture references are immutable shared assets; all mutable board data is copied.
 export function captureTurn(scene) {
     return {
@@ -18,10 +20,10 @@ export function captureTurn(scene) {
 }
 
 export function rollbackPresentation({ count, historySize, blocked = false, busy = false }) {
-    const badge = count > 0 ? String(count) : 'QC';
-    if (busy) return { enabled: false, badge, mode: 'busy', title: 'ĐANG XỬ LÝ', detail: busy === 'ad' ? 'Đang tải quảng cáo…' : 'Đang lùi 1 bước…' };
-    if (!historySize) return { enabled: false, badge, mode: 'empty', title: 'HOÀN TÁC', detail: 'Chưa có bước để lùi' };
-    if (blocked) return { enabled: false, badge, mode: 'blocked', title: 'HOÀN TÁC', detail: 'Tạm khóa thao tác' };
-    return { enabled: true, badge, mode: count > 0 ? 'free' : 'ad', title: 'HOÀN TÁC',
-        detail: count > 0 ? 'Lùi 1 bước · Miễn phí' : 'Xem QC · Lùi 1 bước' };
+    const badge = count > 0 ? String(count) : t('rollback.adBadge');
+    if (busy) return { enabled: false, badge, mode: 'busy', title: t('rollback.busy'), detail: busy === 'ad' ? t('rollback.loadingAd') : t('rollback.rewinding') };
+    if (!historySize) return { enabled: false, badge, mode: 'empty', title: t('rollback.title'), detail: t('rollback.empty') };
+    if (blocked) return { enabled: false, badge, mode: 'blocked', title: t('rollback.title'), detail: t('rollback.blocked') };
+    return { enabled: true, badge, mode: count > 0 ? 'free' : 'ad', title: t('rollback.title'),
+        detail: count > 0 ? t('rollback.freeDetail') : t('rollback.adDetail') };
 }

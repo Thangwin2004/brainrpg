@@ -14,7 +14,7 @@ import { winkGame } from '../integrations/wink/wink-adapter.js';
 import gsap from 'gsap';
 import { generatePuzzle, resolveEncounter, hasSafeMove, START_POWER } from '../core/levelRules.js';
 import { captureTurn } from '../core/rollbackState.js';
-import { t } from '../system/I18nManager.js';
+import { i18n, t } from '../system/I18nManager.js';
 
 export class GameScene extends Container {
     init(game) {
@@ -47,6 +47,7 @@ export class GameScene extends Container {
 
         // ── Wink: start a new round ──
         this._winkRound = winkGame.startRound();
+        this._stopLanguageObserver = i18n.subscribe(() => this.applyLanguage());
         this.isProcessingSwipe = false;
         this.freeRollbacks = 3;
         this.turnCount = 0;
@@ -920,7 +921,18 @@ export class GameScene extends Container {
         this.sceneTimers.add(timer);
     }
 
+    applyLanguage() {
+        if (this.statsBar && typeof this.statsBar.applyLanguage === 'function') {
+            this.statsBar.applyLanguage();
+        }
+        this.updateRollbackUI();
+    }
+
     destroy(options) {
+        if (this._stopLanguageObserver) {
+            this._stopLanguageObserver();
+            this._stopLanguageObserver = null;
+        }
         for (const timer of this.sceneTimers || []) clearTimeout(timer);
         this.moveHistory = [];
         this.levelTextures?.clear();

@@ -112,12 +112,7 @@ export class MenuScene extends Container {
     this.addChild(this.settingsBtn);
 
     // Language change observer for immediate menu refresh
-    this._unsubI18n = i18n.subscribe(() => {
-      this.titleText.text = t("game.title");
-      if (this.playBtn && this.playBtn.text) {
-        this.playBtn.text.text = t("menu.play");
-      }
-    });
+    this._unsubI18n = i18n.subscribe(() => this.applyLanguage());
     
     // 6. Loading Progress Bar Container
     this.loadingContainer = new Container();
@@ -220,7 +215,8 @@ export class MenuScene extends Container {
       this.progressBarFill.roundRect(-this.barWidth / 2 + 2, -this.barHeight / 2 + 2, fillW, this.barHeight - 4, 7)
         .fill(0x80CBC4); // Mint fill
     }
-    this.loadingText.text = `Loading ${Math.round(p * 100)}%`;
+    this._lastProgress = Math.round(p * 100);
+    this.loadingText.text = t("loading.progress", { progress: this._lastProgress });
     if (text) this.subText.text = text;
   }
 
@@ -305,5 +301,26 @@ export class MenuScene extends Container {
       
       if (this.lbModal) this.lbModal.resize(width, height);
       if (this.settingsModal) this.settingsModal.resize(width, height);
+  }
+
+  applyLanguage() {
+    if (this.titleText && !this.titleText.destroyed) {
+      this.titleText.text = t("game.title");
+    }
+    if (this.playBtn && this.playBtn.text && !this.playBtn.text.destroyed) {
+      this.playBtn.text.text = t("menu.play");
+    }
+    if (this.loadingText && !this.loadingText.destroyed && this._lastProgress !== undefined) {
+      this.loadingText.text = t("loading.progress", { progress: this._lastProgress });
+    }
+    this.resize(this.game.app.screen.width, this.game.app.screen.height);
+  }
+
+  destroy(options) {
+    if (this._unsubI18n) {
+      this._unsubI18n();
+      this._unsubI18n = null;
+    }
+    super.destroy(options);
   }
 }
