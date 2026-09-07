@@ -698,11 +698,11 @@ export class GameScene extends Container {
         overlay.style.cssText = 'position:fixed;top:0;left:0;width:100dvw;height:100dvh;background:rgba(0,0,0,0.75);backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px);display:flex;align-items:center;justify-content:center;z-index:10000;';
 
         const card = document.createElement('div');
-        card.style.cssText = 'background:#fbfaf5;border:4.5px solid #B39DDB;box-shadow:inset 0 0 0 2.5px #EDE7F6, 0 6px 0 #7E57C2, 0 18px 40px rgba(126,87,194,0.35);border-radius:28px;width:340px;padding:32px 24px;display:flex;flex-direction:column;align-items:center;text-align:center;box-sizing:border-box;font-family:Be Vietnam Pro, sans-serif;';
+        card.style.cssText = 'background:#fbfaf5;border:4.5px solid #B39DDB;box-shadow:inset 0 0 0 2.5px #EDE7F6, 0 6px 0 #7E57C2, 0 18px 40px rgba(126,87,194,0.35);border-radius:28px;width:320px;padding:28px 20px;display:flex;flex-direction:column;align-items:center;text-align:center;box-sizing:border-box;font-family:Be Vietnam Pro, sans-serif;';
 
         const handleResize = () => {
-            const scale = Math.min(1, (window.innerWidth - 24) / 340,
-                (window.innerHeight - 24) / (card.offsetHeight || 520));
+            const scale = Math.min(1, (window.innerWidth - 24) / 310,
+                (window.innerHeight - 24) / (card.offsetHeight || 400));
             card.style.transform = `scale(${scale})`;
         };
         window.addEventListener('resize', handleResize);
@@ -711,24 +711,33 @@ export class GameScene extends Container {
         <style>
             @keyframes heartbeat {
                 0% { transform: scale(1); }
-                14% { transform: scale(1.25); }
+                14% { transform: scale(1.18); }
                 28% { transform: scale(1); }
-                42% { transform: scale(1.25); }
+                42% { transform: scale(1.18); }
                 70% { transform: scale(1); }
             }
             .revive-title {
                 color: #453268;
-                font-size: 20px;
-                font-weight: 800;
-                margin-bottom: 15px;
-                letter-spacing: 0.5px;
+                font-size: 26px;
+                font-weight: 900;
+                margin-bottom: 4px;
+                letter-spacing: 1px;
+                text-transform: uppercase;
+            }
+            .revive-reason {
+                font-size: 13px;
+                color: #7E57C2;
+                font-weight: 600;
+                line-height: 1.35;
+                margin-bottom: 8px;
+                padding: 0 8px;
             }
             .heart-icon {
                 font-size: 84px;
                 line-height: 1;
-                margin-bottom: 18px;
-                animation: heartbeat 1.4s infinite ease-in-out;
-                filter: drop-shadow(0 8px 16px rgba(179,157,219,0.4));
+                margin: 4px 0 20px 0;
+                animation: heartbeat 1.3s infinite ease-in-out;
+                filter: drop-shadow(0 8px 18px rgba(179,157,219,0.45));
             }
             .revive-3d-btn {
                 width: 220px;
@@ -736,44 +745,52 @@ export class GameScene extends Container {
                 border-radius: 26px;
                 border: 3px solid #ffffff;
                 background: linear-gradient(180deg, #66BB6A 0%, #388E3C 100%);
-                box-shadow: 0 5px 0 #1B5E20, 0 8px 20px rgba(126,87,194,0.15);
+                box-shadow: 0 5px 0 #1B5E20, 0 8px 20px rgba(56,142,60,0.3);
                 color: #ffffff;
-                font-family:'Be Vietnam Pro', sans-serif;
-                font-size: 20px;
-                font-weight: 800;
+                font-family: 'Be Vietnam Pro', sans-serif;
+                font-size: 19px;
+                font-weight: 900;
+                letter-spacing: 0.8px;
                 display: flex;
                 align-items: center;
                 justify-content: center;
                 gap: 10px;
                 cursor: pointer;
-                transition: transform 0.1s ease;
-                margin-bottom: 14px;
-                padding: 0;
+                transition: transform 0.1s ease, box-shadow 0.1s ease;
+                padding: 0 16px;
+                box-sizing: border-box;
             }
             .revive-3d-btn:active {
                 transform: translateY(3px);
-                box-shadow: 0 1px 0 #1B5E20, 0 3px 6px rgba(126,87,194,0.1);
+                box-shadow: 0 2px 0 #1B5E20, 0 4px 10px rgba(56,142,60,0.2);
+            }
+            .revive-error-msg {
+                font-size: 13px;
+                color: #D32F2F;
+                font-weight: 700;
+                margin-top: 8px;
             }
             .skip-btn-text {
+                margin-top: 15px;
                 font-size: 14px;
-                color: #7a7580;
+                color: #8C7B9E;
                 text-decoration: underline;
                 cursor: pointer;
-                font-weight: 600;
+                font-weight: 700;
+                transition: color 0.15s ease;
             }
             .skip-btn-text:hover {
                 color: #453268;
             }
         </style>
-        <div class="revive-title">${this.defeatReason}</div>
+        <div class="revive-title">${t("revive.title")}</div>
+        ${this.defeatReason ? `<div class="revive-reason">${this.defeatReason}</div>` : ''}
         <div class="heart-icon">💖</div>
-        <button class="revive-3d-btn" id="btn-revive">
-            <img src="/assest/iconbtn/images.webp" style="height: 26px; width: auto;">
-            ${t("revive.retry")}
+        <button class="revive-3d-btn" id="btn-revive-action">
+            <img src="/assest/iconbtn/images.webp" style="height:26px;width:auto;flex-shrink:0;">
+            <span>${t("revive.undoAd")}</span>
         </button>
-        <div style="font-size:13px;color:#453268;margin-bottom:16px">${t("revive.prompt")}</div>
-        ${message ? '<div style="font-size:13px;color:#8B3D2C;margin-bottom:12px">' + message + '</div>' : ''}
-        ${this.moveHistory.length ? '<button id="btn-undo-defeat" style="padding:10px 18px;margin-bottom:14px;border-radius:20px;border:1.5px solid #D1C4E9;background:#EDE7F6;color:#453268;font:inherit;font-weight:700;cursor:pointer">' + (this.freeRollbacks > 0 ? t("revive.undoFree", { count: this.freeRollbacks }) : t("revive.undoAd")) + '</button>' : ''}
+        ${message ? `<div class="revive-error-msg">${message}</div>` : ''}
         <div class="skip-btn-text" id="btn-skip">${t("actions.skip")}</div>
     `;
 
@@ -788,10 +805,7 @@ export class GameScene extends Container {
         };
         this.reviveCleanup = cleanup;
 
-        const undoButton = overlay.querySelector('#btn-undo-defeat');
-        if (undoButton) undoButton.onclick = () => this.handleRollback(true);
-
-        document.getElementById('btn-revive').onclick = async () => {
+        document.getElementById('btn-revive-action').onclick = async () => {
             AudioManager.playClickSFX();
             cleanup();
             const success = await AdManager.showRewardedVideo();

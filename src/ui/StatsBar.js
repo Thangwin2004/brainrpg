@@ -144,9 +144,10 @@ export class StatsBar extends Container {
       .fill({ color: 0xFBFAF5 })
       .stroke({ width: 3, color: 0xFFCA28 }); // warm gold stroke
       
-    const groupLeft = (width - (152 + 12 + powerW)) / 2;
-    this.rollbackBtn.position.set(groupLeft + 76, row2CenterY);
-    this.powerContainer.position.set(groupLeft + 164 + powerW / 2, row2CenterY);
+    const rollbackW = 144;
+    const groupLeft = (width - (rollbackW + 12 + powerW)) / 2;
+    this.rollbackBtn.position.set(groupLeft + rollbackW / 2, row2CenterY);
+    this.powerContainer.position.set(groupLeft + rollbackW + 12 + powerW / 2, row2CenterY);
     this.powerGroup.position.set(0, 0);
 
     // ── Report total height ──

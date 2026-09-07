@@ -58,11 +58,11 @@ const messages = {
     "actions.skip": "No, thanks",
 
     "revive.title": "REVIVE?",
-    "revive.prompt": "Watch an ad to retry this floor with 10 power.",
+    "revive.prompt": "Watch an ad to revive and continue.",
     "revive.retry": "RETRY ↻",
-    "revive.undoFree": "Undo · {count} free left",
-    "revive.undoAd": "Watch Ad · Undo 1 step",
-    "revive.adFailed": "Could not claim undo. You can try again.",
+    "revive.undoFree": "UNDO ({count} FREE)",
+    "revive.undoAd": "REVIVE",
+    "revive.adFailed": "Could not claim revive. You can try again.",
 
     "gameover.title": "GAME OVER",
     "gameover.newRecord": "NEW RECORD!",
@@ -141,12 +141,12 @@ const messages = {
     "actions.cancel": "Hủy",
     "actions.skip": "Không, cảm ơn",
 
-    "revive.title": "TIẾP TỤC?",
-    "revive.prompt": "Xem quảng cáo để chơi lại cùng bản đồ, với 10 sức mạnh.",
+    "revive.title": "HỒI SINH?",
+    "revive.prompt": "Xem quảng cáo để hồi sinh và tiếp tục.",
     "revive.retry": "CHƠI LẠI ↻",
-    "revive.undoFree": "Hoàn tác · Còn {count} lượt miễn phí",
-    "revive.undoAd": "Xem QC · Hoàn tác 1 bước",
-    "revive.adFailed": "Chưa nhận được lượt hoàn tác. Bạn có thể thử lại.",
+    "revive.undoFree": "LÙI LƯỢT (CÒN {count})",
+    "revive.undoAd": "HỒI SINH",
+    "revive.adFailed": "Chưa nhận được lượt hồi sinh. Bạn có thể thử lại.",
 
     "gameover.title": "KẾT THÚC",
     "gameover.newRecord": "KỶ LỤC MỚI!",
