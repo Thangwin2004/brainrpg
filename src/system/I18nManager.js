@@ -204,6 +204,10 @@ class I18nManager {
     this.applyDocumentLanguage();
   }
 
+  get currentLanguage() {
+    return this.language;
+  }
+
   applyDocumentLanguage() {
     if (globalThis.document?.documentElement) {
       document.documentElement.lang = this.language;
@@ -215,8 +219,10 @@ class I18nManager {
     const normalized = normalizeLanguage(language) || "en";
     if (persist) {
       try {
-        localStorage.setItem(STORAGE_KEY, normalized);
-        this.hasLocalOverride = true;
+        if (typeof window !== "undefined" && window.localStorage) {
+          window.localStorage.setItem(STORAGE_KEY, normalized);
+          this.hasLocalOverride = true;
+        }
       } catch {
         // Session fallback
       }
