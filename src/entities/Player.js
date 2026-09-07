@@ -157,7 +157,6 @@ export class Player extends Container {
     
     gsap.to(this.sprite, {
       y: -20,
-      scale: 1.2,
       yoyo: true,
       repeat: 1,
       duration: 0.15,
@@ -215,11 +214,17 @@ export class Player extends Container {
 
   
   resetPower(val = 10) {
+      gsap.killTweensOf(this.sprite);
+      gsap.killTweensOf(this.sprite.scale);
       this.power = val;
       this.updatePowerBadge();
       this.sprite.tint = 0xffffff;
       this.sprite.rotation = 0;
+      this.sprite.x = 0;
       this.sprite.y = 0;
+      const texture = AssetManager.getPlayerTexture();
+      this.sprite.texture = texture;
+      this.sprite.scale.set(58 / Math.max(texture.width, texture.height));
   }
   
   die() {
@@ -263,4 +268,11 @@ export class Player extends Container {
   }
   
 
+  destroy(options) {
+    gsap.killTweensOf(this.position);
+    gsap.killTweensOf(this.frame.scale);
+    gsap.killTweensOf(this.sprite);
+    gsap.killTweensOf(this.sprite.scale);
+    super.destroy(options);
+  }
 }

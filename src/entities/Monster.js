@@ -3,7 +3,7 @@ import { AssetManager } from '../managers/AssetManager.js';
 import gsap from 'gsap';
 
 export class Monster extends Container {
-  constructor(power, isBoss = false) {
+  constructor(power, isBoss = false, texture) {
     super();
     
     this.power = power;
@@ -14,7 +14,7 @@ export class Monster extends Container {
     this.gridY = 0;
     
     // Visuals
-    const texture = AssetManager.getRandomMonsterTexture();
+    texture ??= AssetManager.getRandomMonsterTexture();
     this.sprite = new Sprite(texture);
     this.sprite.anchor.set(0.5, 0.75);
     
@@ -116,7 +116,6 @@ export class Monster extends Container {
     this.idleTween.kill();
     gsap.to(this, {
       alpha: 0,
-      scale: 0.1,
       rotation: Math.PI,
       duration: 0.3,
       ease: "back.in(2)",
@@ -131,6 +130,9 @@ export class Monster extends Container {
     if (this.idleTween) this.idleTween.kill();
     if (this.sprite) gsap.killTweensOf(this.sprite.scale);
     if (this.aura) gsap.killTweensOf(this.aura.scale);
+    if (this.crown) gsap.killTweensOf(this.crown.scale);
+    if (this.glow) gsap.killTweensOf(this.glow.scale);
+    if (this.powerText) gsap.killTweensOf(this.powerText.scale);
     gsap.killTweensOf(this);
     super.destroy(options);
   }

@@ -1,5 +1,6 @@
 import { Container, Graphics, FillGradient, Text, TextStyle } from 'pixi.js';
 import { IconBtn } from './Button.js';
+import { RollbackButton } from './RollbackButton.js';
 
 export class StatsBar extends Container {
   constructor(width, onOpenSettings, onRestart) {
@@ -50,33 +51,8 @@ export class StatsBar extends Container {
     }, this._btnSize, '#D1C4E9', '#B39DDB', '#9575CD');
     this.addChild(this.restartBtn);
 
-    // 1d. Rollback Button (Soft Purple)
-    const undoSvg = `<svg viewBox="0 0 24 24" width="24" height="24"><path fill="#ffffff" d="M12.5 8c-2.65 0-5.05.99-6.9 2.6L2 7v9h9l-3.62-3.62c1.39-1.16 3.16-1.88 5.12-1.88 3.54 0 6.55 2.31 7.6 5.5l2.37-.78C20.89 11.12 17.03 8 12.5 8z"/></svg>`;
-    this.rollbackBtn = new IconBtn(undoSvg, () => {
-      if (this.onRollback) this.onRollback();
-    }, this._btnSize, '#D1C4E9', '#B39DDB', '#9575CD');
+    this.rollbackBtn = new RollbackButton(() => this.onRollback?.());
     this.addChild(this.rollbackBtn);
-
-    // 1e. Rollback Badge
-    this.rollbackBadgeBg = new Graphics()
-      .circle(0, 0, 9)
-      .fill({ color: 0xE53935 });
-    this.rollbackBadgeBg.eventMode = 'none'; // Pass clicks through to button
-    this.addChild(this.rollbackBadgeBg);
-
-    this.rollbackBadgeText = new Text({
-      text: '3',
-      style: new TextStyle({
-        fontFamily: ['Be Vietnam Pro', 'sans-serif'],
-        fill: 0xffffff,
-        fontSize: 22,
-        fontWeight: '700'
-      })
-    });
-    this.rollbackBadgeText.anchor.set(0.5);
-    this.rollbackBadgeText.scale.set(0.5);
-    this.rollbackBadgeText.eventMode = 'none'; // Pass clicks through to button
-    this.addChild(this.rollbackBadgeText);
 
     // ═══════════════════════════════════════
     // ROW 2: Power pill (centered)
@@ -150,21 +126,13 @@ export class StatsBar extends Container {
     // Restart button — to the left of settings
     this.restartBtn.position.set(width - pad - this._btnSize * 3 - 8, row1CenterY);
 
-    // Rollback button — to the left of restart
-    this.rollbackBtn.position.set(width - pad - this._btnSize * 5 - 16, row1CenterY);
-
-    // Badge — top-right of rollback button
-    const badgeX = width - pad - this._btnSize * 5 - 16 + 18;
-    const badgeY = row1CenterY - 18;
-    this.rollbackBadgeBg.position.set(badgeX, badgeY);
-    this.rollbackBadgeText.position.set(badgeX, badgeY);
-
     // ── ROW 2 ──
     const row2Y = row1Y + pillH + gap;
     const row2CenterY = row2Y + pillH / 2;
 
     // Power pill — centered, width adapts to screen, slightly thicker
-    const powerW = 180;
+    const compactLandscape = isLandscape && height > 0 && height < 600;
+    const powerW = compactLandscape ? 140 : width < 380 ? 128 : 180;
     this.powerShadow.clear()
       .roundRect(-powerW / 2, -pillH / 2 + 5, powerW, pillH, pillR)
       .fill({ color: 0x000000, alpha: 0.1 });
@@ -174,11 +142,19 @@ export class StatsBar extends Container {
       .fill({ color: 0xFBFAF5 })
       .stroke({ width: 3, color: 0xFFCA28 }); // warm gold stroke
       
-    this.powerContainer.position.set(width / 2, row2CenterY);
+    const groupLeft = (width - (152 + 12 + powerW)) / 2;
+    this.rollbackBtn.position.set(groupLeft + 76, row2CenterY);
+    this.powerContainer.position.set(groupLeft + 164 + powerW / 2, row2CenterY);
     this.powerGroup.position.set(0, 0);
 
     // ── Report total height ──
     this.totalHeight = row2Y + pillH + gap;
+    if (compactLandscape) {
+      this.powerContainer.position.set(78, height * 0.48 - 20);
+      this.settingsBtn.position.set(width - 44, 28);
+      this.restartBtn.position.set(width - 44, 92);
+      this.rollbackBtn.position.set(width - 90, 178);
+    }
   }
 
   updateStats(floor, power) {
@@ -186,31 +162,7 @@ export class StatsBar extends Container {
     this.powerText.text = `⚡ ${power}`;
   }
 
-  forceUpdateRollbacks(count, canRollback) {
-    // Update badge circle color
-    this.rollbackBadgeBg.clear();
-    const badgeColor = count <= 0 ? 0x9E9E9E : 0xE53935;
-    this.rollbackBadgeBg.circle(0, 0, 9).fill({ color: badgeColor });
-
-    // Update badge text
-    this.rollbackBadgeText.text = count <= 0 ? '+' : String(count);
-
-    // Update Icon
-    const undoSvg = `<svg viewBox="0 0 24 24" width="24" height="24"><path fill="#ffffff" d="M12.5 8c-2.65 0-5.05.99-6.9 2.6L2 7v9h9l-3.62-3.62c1.39-1.16 3.16-1.88 5.12-1.88 3.54 0 6.55 2.31 7.6 5.5l2.37-.78C20.89 11.12 17.03 8 12.5 8z"/></svg>`;
-    const adSvg = `<svg viewBox="0 0 24 24" width="24" height="24"><path fill="#ffffff" d="M21 3H3c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-11 13V8l6 4-6 4z"/></svg>`;
-    this.rollbackBtn.updateIcon(count <= 0 ? adSvg : undoSvg);
-
-    // Enable/disable button
-    if (canRollback) {
-      this.rollbackBtn.alpha = 1;
-      this.rollbackBadgeBg.alpha = 1;
-      this.rollbackBadgeText.alpha = 1;
-      this.rollbackBtn.eventMode = 'static';
-    } else {
-      this.rollbackBtn.alpha = 0.5;
-      this.rollbackBadgeBg.alpha = 0.5;
-      this.rollbackBadgeText.alpha = 0.5;
-      this.rollbackBtn.eventMode = 'none';
-    }
+  forceUpdateRollbacks(count, historySize, blocked = false, busy = false) {
+    this.rollbackBtn.setState({ count, historySize, blocked, busy });
   }
 }

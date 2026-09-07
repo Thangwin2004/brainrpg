@@ -3,7 +3,7 @@ import { AssetManager } from '../managers/AssetManager.js';
 import gsap from 'gsap';
 
 export class Item extends Container {
-  constructor(power, type = 'add') {
+  constructor(power, type = 'add', texture) {
     super();
     this.power = power;
     this.type = type;
@@ -23,7 +23,7 @@ export class Item extends Container {
     this.icon.addChild(halo);
     
     // Food / Drink Sprite (from master item assets)
-    const texture = AssetManager.getRandomItemTexture();
+    texture ??= AssetManager.getRandomItemTexture();
     this.sprite = new Sprite(texture);
     this.sprite.anchor.set(0.5, 0.65);
     

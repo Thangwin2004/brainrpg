@@ -1,9 +1,11 @@
 import { Rectangle } from 'pixi.js';
 
 export class SwipeManager {
-  constructor(app, onSwipe) {
+  constructor(app, onSwipe, { canStart = () => true, contains = () => true } = {}) {
     this.app = app;
     this.onSwipe = onSwipe; // Callback function(direction: 'up' | 'down' | 'left' | 'right')
+    this.canStart = canStart;
+    this.contains = contains;
     
     this.startX = 0;
     this.startY = 0;
@@ -15,21 +17,35 @@ export class SwipeManager {
     
     this._onPointerDown = this.onPointerDown.bind(this);
     this._onPointerUp = this.onPointerUp.bind(this);
+    this._onCancel = () => { this.isSwiping = false; };
+    this._onKeyDown = e => {
+      const direction = { ArrowUp: 'up', ArrowDown: 'down', ArrowLeft: 'left', ArrowRight: 'right' }[e.key];
+      if (!direction || e.repeat || e.ctrlKey || e.metaKey || e.altKey || !this.canStart()) return;
+      if (e.target?.closest?.('input, textarea, select, button, [contenteditable="true"]')) return;
+      e.preventDefault();
+      this.onSwipe(direction);
+    };
     
     this.app.stage.on('pointerdown', this._onPointerDown);
     this.app.stage.on('pointerup', this._onPointerUp);
     this.app.stage.on('pointerupoutside', this._onPointerUp);
+    this.app.stage.on('pointercancel', this._onCancel);
+    window.addEventListener('keydown', this._onKeyDown);
+    window.addEventListener('blur', this._onCancel);
   }
   
   onPointerDown(e) {
+    if (this.isSwiping || !this.canStart() || !this.contains(e.global) || (e.button != null && e.button !== 0)) return;
+    this.pointerId = e.pointerId;
     this.startX = e.global.x;
     this.startY = e.global.y;
     this.isSwiping = true;
   }
   
   onPointerUp(e) {
-    if (!this.isSwiping) return;
+    if (!this.isSwiping || e.pointerId !== this.pointerId) return;
     this.isSwiping = false;
+    if (!this.canStart()) return;
     
     const endX = e.global.x;
     const endY = e.global.y;
@@ -56,5 +72,8 @@ export class SwipeManager {
     this.app.stage.off('pointerdown', this._onPointerDown);
     this.app.stage.off('pointerup', this._onPointerUp);
     this.app.stage.off('pointerupoutside', this._onPointerUp);
+    this.app.stage.off('pointercancel', this._onCancel);
+    window.removeEventListener('keydown', this._onKeyDown);
+    window.removeEventListener('blur', this._onCancel);
   }
 }

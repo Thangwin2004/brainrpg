@@ -12,6 +12,8 @@ import { SettingsModal } from '../ui/SettingsModal.js';
 import { MenuScene } from './MenuScene.js';
 import { winkGame } from '../integrations/wink/wink-adapter.js';
 import gsap from 'gsap';
+import { generatePuzzle, resolveEncounter, hasSafeMove, START_POWER } from '../core/levelRules.js';
+import { captureTurn } from '../core/rollbackState.js';
 
 export class GameScene extends Container {
     init(game) {
@@ -46,6 +48,10 @@ export class GameScene extends Container {
         this._winkRound = winkGame.startRound();
         this.isProcessingSwipe = false;
         this.freeRollbacks = 3;
+        this.turnCount = 0;
+        this.moveHistory = [];
+        this.rollbackBusy = false;
+        this.sceneTimers = new Set();
 
         this.floorContainer = new Container();
         this.addChild(this.floorContainer);
@@ -58,10 +64,24 @@ export class GameScene extends Container {
         this.statsBar.onRollback = this.handleRollback.bind(this);
         this.addChild(this.statsBar);
 
-        // Swipe Manager
-        this.swipeManager = new SwipeManager(game.app, this.handleSwipe.bind(this));
+        this.statusText = new Text({ text: '', style: {
+            fontFamily: ['Be Vietnam Pro', 'sans-serif'], fontSize: 14, fontWeight: '700',
+            fill: 0xffffff, align: 'center', wordWrap: true, wordWrapWidth: width - 24,
+            stroke: { color: 0x453268, width: 1.5 },
+        } });
+        this.statusText.anchor.set(0.5, 1);
+        this.addChild(this.statusText);
 
-        // Initialize Player (Keeps power across floors)
+        this.swipeManager = new SwipeManager(game.app, this.handleSwipe.bind(this), {
+            canStart: () => !this.isProcessingSwipe && !this.inputBlocked,
+            contains: point => {
+                const local = this.gridContainer.toLocal(point);
+                return Math.abs(local.x) <= this.cols * this.cellSize / 2
+                    && Math.abs(local.y) <= this.rows * this.cellSize / 2;
+            },
+        });
+
+        // Each floor is a separate puzzle starting at START_POWER.
         this.player = new Player();
         this.gridContainer.addChild(this.player);
 
@@ -82,6 +102,7 @@ export class GameScene extends Container {
             this.bgImage.scale.set(scale);
         }
         const isLandscape = width > height;
+        const compactLandscape = isLandscape && height < 600;
         const topMargin = isLandscape ? 20 : Math.max(32, height * 0.05);
 
         if (this.statsBar) {
@@ -90,13 +111,15 @@ export class GameScene extends Container {
         }
 
         if (this.cols && this.rows) {
-            const headerH = (this.statsBar ? this.statsBar.totalHeight : 100) + topMargin;
-            const gap = isLandscape ? 16 : Math.max(24, height * 0.04);
-            const bottomPad = isLandscape ? 40 : 20;
-            const availH = height - headerH - gap - bottomPad;
+            const headerH = compactLandscape ? 0 : (this.statsBar ? this.statsBar.totalHeight : 100) + topMargin;
+            const gap = compactLandscape ? 32 : isLandscape ? 16 : Math.max(24, height * 0.04);
+            const bottomPad = compactLandscape ? 54 : 76;
+            const availH = Math.max(40, height - headerH - gap - bottomPad);
 
             let maxGridPx;
-            if (isLandscape) {
+            if (compactLandscape) {
+                maxGridPx = Math.max(80, width - 280);
+            } else if (isLandscape) {
                 const bgW = this.bgImage.texture.width * this.bgImage.scale.x;
                 const sidePad = Math.max(12, bgW * 0.04);
                 maxGridPx = Math.min(bgW - sidePad * 2, availH);
@@ -115,7 +138,7 @@ export class GameScene extends Container {
                 this.floorContainer.scale.set(scale);
             }
 
-            let gridY = height * 0.62;
+            let gridY = compactLandscape ? (height - bottomPad + gap) / 2 : height * 0.62;
             const scaledGridHeight = gridTotalH * scale;
 
             const minGridY = headerH + gap + scaledGridHeight / 2;
@@ -127,19 +150,27 @@ export class GameScene extends Container {
             this.gridContainer.position.set(width / 2, gridY);
             if (this.floorContainer) this.floorContainer.position.set(width / 2, gridY);
         }
+        if (this.statusText) {
+            this.statusText.style.wordWrapWidth = width - 24;
+            this.statusText.position.set(width / 2, height - 10);
+        }
+        if (this.tutorialModal) this.tutorialModal.resize(width, height);
         if (this.settingsModal) this.settingsModal.resize(width, height);
     }
     generateLevel(floor) {
         this.isProcessingSwipe = true;
-        for (let i = this.gridContainer.children.length - 1; i >= 0; i--) {
-            const child = this.gridContainer.children[i];
-            if (child !== this.player) {
-                this.gridContainer.removeChild(child);
-                if (child.destroy && typeof child.destroy === 'function') {
-                    child.destroy({ children: true });
-                }
-            }
+        this.inputBlocked = false;
+        this.turnCount = 0;
+        this.rollbackBusy = false;
+        this.moveHistory = [];
+        this.levelRevision = (this.levelRevision || 0) + 1;
+        this.player.resetPower(START_POWER);
+        for (const child of this.floorContainer.removeChildren()) child.destroy({ children: true });
+        if (!this.levelLayout || this.levelLayout.floor !== floor) {
+            this.levelLayout = generatePuzzle(floor);
+            this.levelTextures = new Map();
         }
+        this.clearBoardEntities();
 
         if (this.tutorialText) {
             this.removeChild(this.tutorialText);
@@ -147,10 +178,7 @@ export class GameScene extends Container {
             this.tutorialText = null;
         }
 
-        let cols = 8;
-        let rows = 9;
-        if (floor <= 5) { cols = 6; rows = 7; }
-        else if (floor > 10) { cols = 8; rows = 10; }
+        const { cols, rows, start, boss } = this.levelLayout;
 
         this.cols = cols;
         this.rows = rows;
@@ -169,142 +197,18 @@ export class GameScene extends Container {
         this.resize(this.game.app.screen.width, this.game.app.screen.height);
         this.updateBackgroundHue(floor);
 
-        const difficulty = Math.min(floor, 20);
-        const pX = Math.floor(cols / 2);
-        const pY = rows - 1;
-        const bX = Math.floor(cols / 2);
-        const bY = 0;
-
-
-
-        const bossBasePower = 15 + floor * 5;
-        
-        // 1. Generate Golden Path using a simple directed random walk
-        const pathCells = [];
-        let currX = pX;
-        let currY = pY;
-        
-        while (currY > 1) {
-            pathCells.push({ x: currX, y: currY });
-            
-            const dirs = [];
-            dirs.push({ dx: 0, dy: -1 }); // UP (weight heavier)
-            dirs.push({ dx: 0, dy: -1 }); // UP
-            if (currX > 0) dirs.push({ dx: -1, dy: 0 }); // LEFT
-            if (currX < cols - 1) dirs.push({ dx: 1, dy: 0 }); // RIGHT
-            
-            // Randomly pick a direction
-            let nx, ny;
-            let moved = false;
-            
-            for (let attempt = 0; attempt < 5; attempt++) {
-                const d = dirs[Math.floor(Math.random() * dirs.length)];
-                nx = currX + d.dx;
-                ny = currY + d.dy;
-                
-                // Ensure we don't go back and don't get stuck
-                if (!pathCells.some(c => c.x === nx && c.y === ny)) {
-                    currX = nx;
-                    currY = ny;
-                    moved = true;
-                    break;
-                }
-            }
-            if (!moved) {
-                // Force move up if stuck horizontally
-                currY--;
-            }
-        }
-        
-        // Connect to boss X
-        if (currX !== bX) {
-            const dir = bX > currX ? 1 : -1;
-            while (currX !== bX) {
-                pathCells.push({ x: currX, y: currY });
-                currX += dir;
-            }
-        }
-        pathCells.push({ x: currX, y: 1 });
-        
-        // 2. Distribute power along the Golden Path
-        let targetPower = bossBasePower + 2; // Need just enough to beat the boss
-        let currentPower = 10;
-        
-        // Skip pathCells[0] which is the player start position
-        for (let i = 1; i < pathCells.length; i++) {
-            const cell = pathCells[i];
-            const remainingSteps = pathCells.length - i;
-            const powerNeeded = targetPower - currentPower;
-            
-            if (powerNeeded <= 0) {
-                // Just put an empty space
-                continue;
-            }
-            
-            // Average power to add per step
-            let stepPower = Math.ceil(powerNeeded / remainingSteps);
-            stepPower = Math.min(stepPower + Math.floor(Math.random() * 3), powerNeeded); // Randomize a bit
-            
-            if (stepPower > 0) {
-                targetPower += 1; // Boss gains 1 power when player collects this!
-                
-                // If the power step is too large, it MUST be an item, else player can't kill it
-                let isItem = Math.random() > 0.4;
-                if (stepPower >= currentPower) {
-                    isItem = true; 
-                }
-
-                if (isItem) {
-                    this.placeEntity(new Item(stepPower, 'add'), cell.x, cell.y);
-                } else {
-                    this.placeEntity(new Monster(stepPower, false), cell.x, cell.y);
-                }
-                currentPower += stepPower;
-            }
-        }
-        
-        // 3. Fill the rest of the board with Soft Walls and Traps
-        let probBlocker, probTrap, probBait;
-        if (floor <= 5) {
-            probBlocker = 0.20; probTrap = 0.05; probBait = 0.15;
-        } else if (floor <= 10) {
-            probBlocker = 0.45; probTrap = 0.15; probBait = 0.10;
-        } else {
-            probBlocker = 0.65; probTrap = 0.20; probBait = 0.05;
+        const pX = start.x, pY = start.y, bX = boss.x, bY = boss.y;
+        this.walls = Array.from({ length: rows }, () => Array(cols).fill(false));
+        for (const data of this.levelLayout.entities) {
+            const key = `${data.x},${data.y}`;
+            const texture = this.levelTextures.get(key);
+            const entity = data.kind === 'monster'
+                ? new Monster(data.power, !!data.isBoss, texture) : new Item(data.power, data.itemType, texture);
+            this.levelTextures.set(key, entity.sprite.texture);
+            this.placeEntity(entity, data.x, data.y);
+            if (data.isBoss) this.bossEntity = entity;
         }
 
-        for (let r = 0; r < this.rows; r++) {
-            for (let c = 0; c < this.cols; c++) {
-                this.walls[r][c] = false; // All open
-                
-                // Skip player start, boss cell, and golden path
-                if ((r === pY && c === pX) || (r === bY && c === bX)) continue;
-                if (pathCells.some(pc => pc.x === c && pc.y === r)) continue;
-                
-                // Giảm mật độ đồ vật/quái trên bàn cờ lớn để đỡ rối mắt
-                const density = this.cols === 6 ? 1 : (this.cols === 8 ? 0.35 : 0.35);
-                
-                const rand = Math.random();
-                if (rand < 0.12 * density) {
-                    // Blocker (Unbeatable monster)
-                    const blockerPower = bossBasePower * 2 + Math.floor(Math.random() * 100);
-                    this.placeEntity(new Monster(blockerPower, false), c, r);
-                } else if (rand < 0.17 * density) {
-                    // Trap (Divide)
-                    this.placeEntity(new Item(2, 'divide'), c, r);
-                } else if (rand < 0.27 * density) {
-                    // Bait
-                    if (Math.random() > 0.5) {
-                        this.placeEntity(new Item(2, 'multiply'), c, r);
-                    } else {
-                        this.placeEntity(new Item(15 + Math.floor(Math.random()*15), 'add'), c, r);
-                    }
-                }
-                
-                // Otherwise Empty
-            }
-        }
-        
         for (let r = 0; r < this.rows; r++) {
             for (let c = 0; c < this.cols; c++) {
                 const cell = new Graphics();
@@ -340,20 +244,20 @@ export class GameScene extends Container {
         this.grid[pY][pX] = this.player;
         this.gridContainer.setChildIndex(this.player, this.gridContainer.children.length - 1);
 
-        this.bossEntity = new Monster(bossBasePower, true);
-        this.placeEntity(this.bossEntity, bX, bY);
-
-        this.lastMove = null;
         this.updateStatsUI();
-        if (floor === 1) {
+        if (floor === 1 && !this.tutorialShown) {
+            this.tutorialShown = true;
             this.isProcessingSwipe = true; // Keep it true to block swipe
             const { width, height } = this.game.app.screen;
-            const modal = new TutorialModal(width, height, () => {
+            this.tutorialModal = new TutorialModal(width, height, () => {
+                this.tutorialModal = null;
                 this.isProcessingSwipe = false;
+                if (this.statsBar) this.updateRollbackUI();
             });
-            this.addChild(modal);
+            this.addChild(this.tutorialModal);
         } else {
             this.isProcessingSwipe = false;
+            this.updateRollbackUI();
         }
     }
 
@@ -374,9 +278,14 @@ export class GameScene extends Container {
                 .fill({ color: 0xFFCDD2 })
                 .stroke({ color: 0xE53935, width: 2 });
         } else {
+            const entity = this.grid[r][c];
+            const adjacent = Math.abs(this.player.gridX - c) + Math.abs(this.player.gridY - r) === 1;
+            const dangerous = entity !== this.player && !resolveEncounter(this.player.power, entity).survives;
+            const poison = entity?.isItem && entity.type === 'divide';
+            const color = dangerous ? 0xFFCDD2 : poison ? 0xE1BEE7 : entity?.isBoss ? 0xFFF3E0 : 0xF3F3F4;
             cell.roundRect(offset, offset, size, size, 14)
-                .fill({ color: 0xF3F3F4 })
-                .stroke({ color: 0xCBC4D0, width: 1 });
+                .fill({ color })
+                .stroke({ color: adjacent ? (dangerous ? 0xE53935 : 0x26A69A) : 0xCBC4D0, width: adjacent ? 3 : 1 });
         }
     }
 
@@ -480,6 +389,7 @@ export class GameScene extends Container {
                     ease: "back.out(1)",
                     onComplete: () => {
                         this.isProcessingSwipe = false;
+                        this.updateRollbackUI();
                     }
                 });
             }
@@ -520,15 +430,6 @@ export class GameScene extends Container {
         }
     }
 
-    updateStatsUI() {
-        this.statsBar.updateStats(this.floor, this.player.power);
-        if (this.statsBar.forceUpdateRollbacks) {
-            this.statsBar.forceUpdateRollbacks(this.freeRollbacks, !!this.lastMove);
-        } else {
-            console.error("CRITICAL ERROR: StatsBar does not have forceUpdateRollbacks! Browser is running cached code!");
-        }
-    }
-
     getWorldPos(gridX, gridY) {
         const gridW = this.cols * this.cellSize;
         const gridH = this.rows * this.cellSize;
@@ -554,7 +455,8 @@ export class GameScene extends Container {
     }
 
     async handleSwipe(direction) {
-        if (this.isProcessingSwipe) return;
+        if (this.destroyed || this.isProcessingSwipe || this.inputBlocked) return;
+        if (!['up', 'down', 'left', 'right'].includes(direction)) return;
 
         let targetX = this.player.gridX;
         let targetY = this.player.gridY;
@@ -571,34 +473,15 @@ export class GameScene extends Container {
 
         // Check walls
         if (this.walls[targetY][targetX]) {
-            return; // Bonk!
+            this.statusText.text = 'Ô này đã sập. Chọn hướng khác hoặc hoàn tác.';
+            return;
         }
 
         this.isProcessingSwipe = true;
 
         const targetEntity = this.grid[targetY][targetX];
-        let bossGainedPower = false;
-        if (this.bossEntity && !this.bossEntity.destroyed && targetEntity !== this.bossEntity) {
-            this.bossEntity.power += 1;
-            this.bossEntity.updatePowerBadge();
-            if (this.showFloatingText) this.showFloatingText(this.bossEntity.x, this.bossEntity.y, "+1", 0xFF0000, false);
-            bossGainedPower = true;
-        }
-
-        // Save state for rollback
-        this.lastMove = {
-            prevX: this.player.gridX,
-            prevY: this.player.gridY,
-            targetX, targetY,
-            prevPower: this.player.power,
-            bossGainedPower,
-            entityData: targetEntity ? {
-                type: targetEntity.isMonster ? 'monster' : 'item',
-                power: targetEntity.power,
-                itemType: targetEntity.type,
-                isBoss: targetEntity.isBoss
-            } : null
-        };
+        const snapshot = captureTurn(this);
+        this.updateRollbackUI();
 
         const wPos = this.getWorldPos(targetX, targetY);
 
@@ -643,7 +526,7 @@ export class GameScene extends Container {
             AudioManager.playAttackSFX();
             await this.player.bump(direction, wPos.x, wPos.y);
 
-            if (this.player.power > targetEntity.power) {
+            if (resolveEncounter(this.player.power, targetEntity).survives) {
                 // Win! Absorb monster power
                 this.player.absorbPower(targetEntity.power);
                 this.showFloatingText(wPos.x, wPos.y, `+${targetEntity.power}`, 0x00FF00);
@@ -661,9 +544,17 @@ export class GameScene extends Container {
                 if (isBoss) {
                     AudioManager.playLevelUpSFX();
                     if (this.playVictoryEffect) this.playVictoryEffect(wPos.x, wPos.y);
-                    setTimeout(() => this.nextFloor(), 1300);
+                    this.moveHistory = [];
+                    this.turnCount++;
+                    this.updateStatsUI();
+                    this.statusText.text = 'Đã thắng! Tầng tiếp theo bắt đầu với 10 sức mạnh.';
+                    this.schedule(() => this.nextFloor(), 700);
+                    return; // Input stays locked throughout the transition.
                 }
             } else {
+                // Record the failed attack itself: undo must restore this exact turn.
+                this.moveHistory.push(snapshot);
+                this.turnCount++;
                 // Lose! (Retry puzzle floor)
                 this.player.spendPower(this.player.power); // Zero out for effect
                 this.showFloatingText(wPos.x, wPos.y, `Thất bại`, 0xFF0000);
@@ -672,95 +563,114 @@ export class GameScene extends Container {
             }
         }
 
-        if (this.lastMove) {
-            const prevX = this.lastMove.prevX;
-            const prevY = this.lastMove.prevY;
-            this.tileStates[prevY][prevX] = 2;
-            this.walls[prevY][prevX] = true;
-            this.updateCellVisuals(prevY, prevX);
-        }
+        this.moveHistory.push(snapshot);
+        this.turnCount++;
+        this.tileStates[snapshot.playerY][snapshot.playerX] = 2;
+        this.walls[snapshot.playerY][snapshot.playerX] = true;
 
         this.updateStatsUI();
+        if (this.player.power <= 0 || !hasSafeMove(this.grid, this.walls, this.player.gridX, this.player.gridY, this.player.power)) {
+            this.handleDefeat(this.player.power <= 0 ? 'Bẫy đã làm sức mạnh về 0.' : 'Không còn nước đi an toàn.');
+            return;
+        }
         this.isProcessingSwipe = false;
+        this.updateRollbackUI();
     }
 
-    async handleRollback() {
-        if (this.isProcessingSwipe || !this.lastMove || this.inputBlocked) return;
+    async handleRollback(fromDefeat = false) {
+        const recovering = fromDefeat && this.inputBlocked && !!this.reviveCleanup;
+        if (this.destroyed || this.rollbackBusy || !this.moveHistory.length
+            || (!recovering && (this.isProcessingSwipe || this.inputBlocked))) return;
 
         this.isProcessingSwipe = true;
-        const move = this.lastMove;
+        const snapshot = this.moveHistory.at(-1);
+        const revision = this.levelRevision;
+        const paid = this.freeRollbacks <= 0;
+        this.rollbackBusy = paid ? 'ad' : 'undo';
+        if (recovering) this.reviveCleanup();
+        this.updateRollbackUI();
 
-        // Check if player has free rollbacks or needs to watch ad
-        if (this.freeRollbacks > 0) {
-            this.freeRollbacks--;
-        } else {
-            const adSuccess = await AdManager.showRewardedVideo();
-            if (!adSuccess) {
-                this.isProcessingSwipe = false;
+        if (paid) {
+            this.statusText.text = 'Đang chờ quảng cáo để hoàn tác 1 bước…';
+            let success = false;
+            try { success = await AdManager.showRewardedVideo(); } catch { /* Keep the turn available for retry. */ }
+            if (this.destroyed || revision !== this.levelRevision) return;
+            if (!success) {
+                this.rollbackBusy = false;
+                this.isProcessingSwipe = recovering;
+                this.updateRollbackUI();
+                if (recovering) this.showReviveOffer('Chưa nhận được lượt hoàn tác. Bạn có thể thử lại.');
+                else this.statusText.text = 'Chưa nhận được lượt hoàn tác. Bàn cờ và lịch sử được giữ nguyên.';
                 return;
             }
         }
 
-        // Restore Player Stats
-        this.player.resetPower(move.prevPower);
-
-        // Restore Boss Power if it was incremented
-        if (move.bossGainedPower && this.bossEntity && !this.bossEntity.destroyed) {
-            this.bossEntity.power -= 1;
-            this.bossEntity.updatePowerBadge();
-        }
-
-        // Move Player Back visually and logically
-        this.grid[this.player.gridY][this.player.gridX] = null;
-        this.player.gridX = move.prevX;
-        this.player.gridY = move.prevY;
-        this.grid[this.player.gridY][this.player.gridX] = this.player;
-
-        // Restore the previous cell state (remove wall)
-        this.tileStates[move.prevY][move.prevX] = 0;
-        this.walls[move.prevY][move.prevX] = false;
-        this.updateCellVisuals(move.prevY, move.prevX);
-
-        const wPos = this.getWorldPos(move.prevX, move.prevY);
-        await this.player.moveTo(wPos.x, wPos.y);
-
-        // Restore the entity if there was one
-        if (move.entityData) {
-            const data = move.entityData;
-            let entity;
-            if (data.type === 'monster') {
-                entity = new Monster(data.power, data.isBoss);
-            } else {
-                entity = new Item(data.power, data.itemType);
-            }
-            this.placeEntity(entity, move.targetX, move.targetY);
-        } else {
-            this.grid[move.targetY][move.targetX] = null;
-        }
-
-        // Can only undo one step at a time
-        this.lastMove = null;
-
-        this.updateStatsUI();
+        this.restoreTurn(snapshot);
+        this.moveHistory.pop();
+        if (!paid) this.freeRollbacks--;
+        this.updateRollbackUI();
+        this.inputBlocked = false;
+        this.defeatReason = null;
+        const pos = this.getWorldPos(snapshot.playerX, snapshot.playerY);
+        await this.player.moveTo(pos.x, pos.y);
+        if (this.destroyed || revision !== this.levelRevision) return;
+        this.rollbackBusy = false;
         this.isProcessingSwipe = false;
+        this.updateStatsUI();
+        this.statusText.text = 'Đã lùi 1 bước · ' + this.moveHistory.length + ' bước trong lịch sử · ' + this.freeRollbacks + ' lượt miễn phí';
+    }
+
+    restoreTurn(snapshot) {
+        this.clearBoardEntities();
+        this.walls = snapshot.walls.map(row => [...row]);
+        this.tileStates = snapshot.tileStates.map(row => [...row]);
+        this.grid = Array.from({ length: this.rows }, () => Array(this.cols).fill(null));
+        this.player.resetPower(snapshot.power);
+        this.player.gridX = snapshot.playerX;
+        this.player.gridY = snapshot.playerY;
+        this.turnCount = snapshot.turnCount;
+        this.grid[snapshot.playerY][snapshot.playerX] = this.player;
+        for (const data of snapshot.entities) {
+            const entity = data.kind === 'monster'
+                ? new Monster(data.power, data.isBoss, data.texture) : new Item(data.power, data.itemType, data.texture);
+            this.placeEntity(entity, data.x, data.y);
+            if (data.isBoss) this.bossEntity = entity;
+        }
+        this.updateStatsUI();
+    }
+
+    clearBoardEntities() {
+        const stop = node => {
+            gsap.killTweensOf(node);
+            gsap.killTweensOf(node.position);
+            gsap.killTweensOf(node.scale);
+            for (const child of node.children || []) stop(child);
+        };
+        for (const child of [...this.gridContainer.children]) {
+            if (child === this.player) continue;
+            stop(child);
+            child.destroy({ children: true });
+        }
+        this.bossEntity = null;
     }
 
     handleRestart() {
         if (this.isProcessingSwipe) return;
-        this.player.resetPower(10);
         this.generateLevel(this.floor);
     }
 
-    handleDefeat() {
+    handleDefeat(reason = 'Cần sức mạnh lớn hơn đối thủ để thắng.') {
         this.inputBlocked = true;
+        this.isProcessingSwipe = true;
+        this.defeatReason = reason;
+        this.updateStatsUI();
         AudioManager.playDefeatSFX();
         this.player.die();
-        setTimeout(() => {
-            this.showReviveOffer();
-        }, 800);
+        this.schedule(() => this.showReviveOffer(), 500);
     }
 
-    showReviveOffer() {
+    showReviveOffer(message = '') {
+        if (this.destroyed) return;
         const overlay = document.createElement('div');
         overlay.style.cssText = 'position:fixed;top:0;left:0;width:100dvw;height:100dvh;background:rgba(0,0,0,0.75);backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px);display:flex;align-items:center;justify-content:center;z-index:10000;';
 
@@ -768,11 +678,11 @@ export class GameScene extends Container {
         card.style.cssText = 'background:#ffffff;border-radius:28px;width:340px;padding:32px 24px;display:flex;flex-direction:column;align-items:center;text-align:center;box-sizing:border-box;font-family:Be Vietnam Pro, sans-serif;box-shadow:0 20px 50px rgba(126,87,194,0.3);';
 
         const handleResize = () => {
-            const scale = Math.min(1.0, (window.innerWidth - 30) / 360, (window.innerHeight - 30) / 520);
+            const scale = Math.min(1, (window.innerWidth - 24) / 340,
+                (window.innerHeight - 24) / (card.offsetHeight || 520));
             card.style.transform = `scale(${scale})`;
         };
         window.addEventListener('resize', handleResize);
-        handleResize();
 
         card.innerHTML = `
         <style>
@@ -832,27 +742,37 @@ export class GameScene extends Container {
                 color: #453268;
             }
         </style>
-        <div class="revive-title">BẠN CÓ MUỐN HỒI SINH KHÔNG?</div>
+        <div class="revive-title">${this.defeatReason}</div>
         <div class="heart-icon">💖</div>
         <button class="revive-3d-btn" id="btn-revive">
             <img src="/assest/iconbtn/images.png" style="height: 28px; width: auto;">
-            CÓ
+            CHƠI LẠI ↻
         </button>
+        <div style="font-size:13px;color:#453268;margin-bottom:16px">Xem quảng cáo để chơi lại cùng bản đồ, với 10 sức mạnh.</div>
+        ${message ? '<div style="font-size:13px;color:#8B3D2C;margin-bottom:12px">' + message + '</div>' : ''}
+        ${this.moveHistory.length ? '<button id="btn-undo-defeat" style="padding:12px 20px;margin-bottom:16px;border-radius:20px;border:0;background:#EDE7F6;color:#453268;font:inherit;cursor:pointer">' + (this.freeRollbacks > 0 ? 'Hoàn tác · Còn ' + this.freeRollbacks + ' lượt miễn phí' : 'Xem QC · Hoàn tác 1 bước') + '</button>' : ''}
         <div class="skip-btn-text" id="btn-skip">Không, cảm ơn</div>
     `;
 
         overlay.appendChild(card);
         document.body.appendChild(overlay);
+        handleResize();
 
         const cleanup = () => {
             window.removeEventListener('resize', handleResize);
             if (overlay.parentNode) overlay.parentNode.removeChild(overlay);
+            this.reviveCleanup = null;
         };
+        this.reviveCleanup = cleanup;
+
+        const undoButton = overlay.querySelector('#btn-undo-defeat');
+        if (undoButton) undoButton.onclick = () => this.handleRollback(true);
 
         document.getElementById('btn-revive').onclick = async () => {
             AudioManager.playClickSFX();
             cleanup();
             const success = await AdManager.showRewardedVideo();
+            if (this.destroyed) return;
             if (success) {
                 this.revivePlayer();
             } else {
@@ -878,6 +798,8 @@ export class GameScene extends Container {
     }
 
     showGameOver() {
+        if (this.destroyed || this.gameOverStarted) return;
+        this.gameOverStarted = true;
         // ── Wink: complete round + submit score ──
         if (this._winkRound) {
             winkGame.completeRound(this._winkRound, {
@@ -898,26 +820,30 @@ export class GameScene extends Container {
                 GameScene.defeatCount = 0;
                 await AdManager.showInterstitial();
             }
+            if (this.destroyed) return;
             this.game.setScene(new GameOverScene(this.floor));
         };
         processGameOver();
     }
 
     openSettings() {
-        if (this.settingsModal) return;
+        if (this.settingsModal || this.isProcessingSwipe || this.inputBlocked) return;
         this.isProcessingSwipe = true;
+        this.updateRollbackUI();
         this.settingsModal = new SettingsModal(
             () => {
                 // onClose
                 this.removeChild(this.settingsModal);
                 this.settingsModal = null;
                 this.isProcessingSwipe = false;
+                if (this.statsBar) this.updateRollbackUI();
             },
             () => {
                 // onRestart
                 this.removeChild(this.settingsModal);
                 this.settingsModal = null;
                 this.isProcessingSwipe = false;
+                if (this.statsBar) this.updateRollbackUI();
                 this.player.resetPower(10);
                 this.generateLevel(this.floor);
             },
@@ -933,10 +859,19 @@ export class GameScene extends Container {
     }
 
 
+    updateRollbackUI() {
+        this.statsBar.forceUpdateRollbacks(this.freeRollbacks, this.moveHistory.length,
+            this.isProcessingSwipe || this.inputBlocked, this.rollbackBusy);
+    }
+
     updateStatsUI() {
         if (this.statsBar) {
             this.statsBar.updateStats(this.floor, this.player.power);
-            this.statsBar.forceUpdateRollbacks(this.freeRollbacks, this.lastMove !== null && !this.inputBlocked);
+            this.updateRollbackUI();
+            this.statusText.text = 'Boss ' + this.levelLayout.bossPower + ' · Cần > ' + this.levelLayout.bossPower + ' · ' + this.turnCount + ' bước\nVuốt / phím mũi tên · Ô đỏ: nguy hiểm · Rời ô là sập';
+            for (let y = 0; y < this.rows; y++) {
+                for (let x = 0; x < this.cols; x++) this.updateCellVisuals(y, x);
+            }
         }
     }
 
@@ -976,7 +911,26 @@ export class GameScene extends Container {
         });
     }
 
+    schedule(callback, delay) {
+        const timer = setTimeout(() => {
+            this.sceneTimers.delete(timer);
+            if (!this.destroyed) callback();
+        }, delay);
+        this.sceneTimers.add(timer);
+    }
+
     destroy(options) {
+        for (const timer of this.sceneTimers || []) clearTimeout(timer);
+        this.moveHistory = [];
+        this.levelTextures?.clear();
+        this.reviveCleanup?.();
+        const stopAnimations = node => {
+            gsap.killTweensOf(node);
+            gsap.killTweensOf(node.position);
+            gsap.killTweensOf(node.scale);
+            for (const child of node.children || []) stopAnimations(child);
+        };
+        stopAnimations(this);
         if (this.swipeManager) this.swipeManager.destroy();
         super.destroy(options);
     }
