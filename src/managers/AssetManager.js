@@ -12,7 +12,6 @@ export const AVATAR_FILES = [
   "008_avatar_husky.webp",
   "009_avatar_doremonk.webp",
   "010_avatar_echxanh1.webp",
-  "010_avatar_echxanh1_kicked.webp",
   "011_avatar_nudaeng.webp",
   "012_avatar_hubcat.webp",
   "013_avatar_unicorn.webp",
@@ -93,8 +92,8 @@ export class AssetManager {
     // Initialize audio system and preload SFX buffers
     AudioManager.init();
     
-    // We can filter out the main character and kicked versions for the monsters pool
-    this.monsterAvatars = AVATAR_FILES.filter(f => f !== MAIN_CHAR_FILE && !f.includes('_kicked'));
+    // Filter out the main character for the monsters pool
+    this.monsterAvatars = AVATAR_FILES.filter(f => f !== MAIN_CHAR_FILE);
   }
 
   static async ensureGameplayAssets(onProgress) {

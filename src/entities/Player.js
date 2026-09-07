@@ -238,17 +238,7 @@ export class Player extends Container {
   }
   
   kickOut(onCompleteCallback) {
-    try {
-        const kickedTextureId = MAIN_CHAR_FILE.replace('.png', '_kicked.png');
-        const kickedTexture = Assets.get(kickedTextureId);
-        if (kickedTexture) {
-            this.sprite.texture = kickedTexture;
-        }
-    } catch (e) {
-        console.error("Failed to load kicked texture:", e);
-    }
-
-    // Kicked from left, flying straight into the screen (camera)
+    // Kicked animation - fly up and right while scaling to simulate flying towards camera
     gsap.to(this.sprite, {
       y: -200, // Fly up
       x: 150,  // Fly right
