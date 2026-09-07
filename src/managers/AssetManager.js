@@ -2,62 +2,62 @@ import { Assets } from 'pixi.js';
 import { AudioManager } from './AudioManager.js';
 
 export const AVATAR_FILES = [
-  "001_avatar_laclac.png",
-  "002_avatar_cat_lick1.png",
-  "003_avatar_duck.png",
-  "004_avatar_turtle.png",
-  "005_avatar_long.png",
-  "006_avatar_horse.png",
-  "007_avatar_tiguawhite.png",
-  "008_avatar_husky.png",
-  "009_avatar_doremonk.png",
-  "010_avatar_echxanh1.png",
-  "010_avatar_echxanh1_kicked.png",
-  "011_avatar_nudaeng.png",
-  "012_avatar_hubcat.png",
-  "013_avatar_unicorn.png",
-  "014_avatar_zongbadou.png",
-  "015_avatar_dauLan.png",
-  "016_avatar_banhtung.png",
-  "017_avatar_tiguayel.png",
-  "018_avatar_megachard.png",
-  "019_avatar_gigaboy.png",
-  "020_avatar_cloudball.png",
-  "021_avatar_culama.png",
-  "022_avatar_poolpanda.png",
-  "023_avatar_trollvn.png",
-  "024_avatar_heothy.png",
-  "025_avatar_zolype.png",
-  "026_avatar_crick.png",
-  "027_avatar_penguine.png",
-  "028_avatar_timao.png",
-  "029_avatar_caocal.png",
-  "030_avatar_cowboy.png",
-  "031_avatar_ninjadog.png",
-  "032_avatar_petrocat.png",
-  "033_avatar_richmonkey.png",
-  "034_avatar_hazagi.png",
-  "035_avatar_dogoin.png",
-  "036_avatar_watermelon.png",
-  "037_avatar_timone.png",
-  "038_avatar_ronaldo.png",
-  "039_avatar_hustmouse.png",
-  "040_avatar_hitbear.png",
-  "041_avatar_echxanh2.png",
-  "042_avatar_zolype2.png",
-  "043_avatar_cat_lick2.png",
-  "044_avatar_poolpanda2.png"
+  "001_avatar_laclac.webp",
+  "002_avatar_cat_lick1.webp",
+  "003_avatar_duck.webp",
+  "004_avatar_turtle.webp",
+  "005_avatar_long.webp",
+  "006_avatar_horse.webp",
+  "007_avatar_tiguawhite.webp",
+  "008_avatar_husky.webp",
+  "009_avatar_doremonk.webp",
+  "010_avatar_echxanh1.webp",
+  "010_avatar_echxanh1_kicked.webp",
+  "011_avatar_nudaeng.webp",
+  "012_avatar_hubcat.webp",
+  "013_avatar_unicorn.webp",
+  "014_avatar_zongbadou.webp",
+  "015_avatar_dauLan.webp",
+  "016_avatar_banhtung.webp",
+  "017_avatar_tiguayel.webp",
+  "018_avatar_megachard.webp",
+  "019_avatar_gigaboy.webp",
+  "020_avatar_cloudball.webp",
+  "021_avatar_culama.webp",
+  "022_avatar_poolpanda.webp",
+  "023_avatar_trollvn.webp",
+  "024_avatar_heothy.webp",
+  "025_avatar_zolype.webp",
+  "026_avatar_crick.webp",
+  "027_avatar_penguine.webp",
+  "028_avatar_timao.webp",
+  "029_avatar_caocal.webp",
+  "030_avatar_cowboy.webp",
+  "031_avatar_ninjadog.webp",
+  "032_avatar_petrocat.webp",
+  "033_avatar_richmonkey.webp",
+  "034_avatar_hazagi.webp",
+  "035_avatar_dogoin.webp",
+  "036_avatar_watermelon.webp",
+  "037_avatar_timone.webp",
+  "038_avatar_ronaldo.webp",
+  "039_avatar_hustmouse.webp",
+  "040_avatar_hitbear.webp",
+  "041_avatar_echxanh2.webp",
+  "042_avatar_zolype2.webp",
+  "043_avatar_cat_lick2.webp",
+  "044_avatar_poolpanda2.webp"
 ];
 
 export const ITEM_FILES = [
-  "reddrink.png",
-  "banhmi.png",
-  "BimBim_02.png",
-  "BanhChungBanhTet (1).png",
-  "Lycaphe.png"
+  "reddrink.webp",
+  "banhmi.webp",
+  "BimBim_02.webp",
+  "BanhChungBanhTet (1).webp",
+  "Lycaphe.webp"
 ];
 
-export const MAIN_CHAR_FILE = "010_avatar_echxanh1.png";
+export const MAIN_CHAR_FILE = "010_avatar_echxanh1.webp";
 
 export class AssetManager {
   static gameplayLoadPromise = null;
@@ -74,14 +74,14 @@ export class AssetManager {
             alias: file,
             src: `/assets/image/items/${file}`
           })), [
-            { alias: 'bg_game', src: '/assets/image/backgrounds/bg_game.png' },
-            { alias: 'bg_gameover', src: '/assets/image/backgrounds/bg_gameover.png' }
+            { alias: 'bg_game', src: '/assets/image/backgrounds/bg_game.webp' },
+            { alias: 'bg_gameover', src: '/assets/image/backgrounds/bg_gameover.webp' }
           ])
         },
         {
           name: 'menu',
           assets: [
-            { alias: 'bg_menu', src: '/assets/image/backgrounds/bg_menu.png' }
+            { alias: 'bg_menu', src: '/assets/image/backgrounds/bg_menu.webp' }
           ]
         }
       ]

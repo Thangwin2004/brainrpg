@@ -3,6 +3,7 @@ import { IconBtn } from '../ui/Button.js';
 import { GameScene } from './GameScene.js';
 import { MenuScene } from './MenuScene.js';
 import { AssetManager } from '../managers/AssetManager.js';
+import { t } from '../system/I18nManager.js';
 import gsap from 'gsap';
 
 export class GameOverScene extends Container {
@@ -109,7 +110,7 @@ export class GameOverScene extends Container {
     this.modal.addChild(ribbon);
 
     const titleText = new Text({
-      text: "KẾT THÚC",
+      text: t("gameover.title"),
       style: new TextStyle({
         fontFamily: ['Be Vietnam Pro', 'sans-serif'],
         fontSize: 24,
@@ -135,7 +136,7 @@ export class GameOverScene extends Container {
     gsap.to(this.emoji, { y: -85, duration: 1.5, yoyo: true, repeat: -1, ease: "sine.inOut" });
 
     // Label
-    const labelText = this.isNewRecord ? "KỶ LỤC MỚI! 🎉" : "SỐ TẦNG ĐẠT ĐƯỢC";
+    const labelText = this.isNewRecord ? t("gameover.newRecord") : t("gameover.highestFloor", { floor: "" }).replace(":", "").trim();
     const info = new Text({
       text: labelText,
       style: new TextStyle({

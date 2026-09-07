@@ -1,6 +1,7 @@
 import { Container, Graphics, FillGradient, Text, TextStyle, BlurFilter } from 'pixi.js';
 import { IconBtn } from './Button.js';
 import { winkGame } from '../integrations/wink/wink-adapter.js';
+import { t } from '../system/I18nManager.js';
 
 function getEffectiveUser() {
   if (winkGame && winkGame.personalBest?.displayName) {
@@ -117,7 +118,7 @@ export class LeaderboardModal extends Container {
         this.modal.addChild(ribbon);
 
         const titleText = new Text({
-          text: "BẢNG XẾP HẠNG",
+          text: t("leaderboard.title"),
           style: new TextStyle({
             fontFamily: ['Be Vietnam Pro', 'sans-serif'],
             fontSize: 22,
@@ -138,15 +139,15 @@ export class LeaderboardModal extends Container {
             fontWeight: "900"
         });
         
-        const lblRank = new Text({ text: "HẠNG", style: headerStyle });
+        const lblRank = new Text({ text: t("leaderboard.rankHeader"), style: headerStyle });
         lblRank.anchor.set(0.5);
         lblRank.position.set(-160, -155);
         
-        const lblName = new Text({ text: "THÀNH VIÊN", style: headerStyle });
+        const lblName = new Text({ text: t("leaderboard.playerHeader"), style: headerStyle });
         lblName.anchor.set(0, 0.5);
         lblName.position.set(-80, -155);
         
-        const lblScore = new Text({ text: "ĐIỂM", style: headerStyle });
+        const lblScore = new Text({ text: t("leaderboard.floorHeader"), style: headerStyle });
         lblScore.anchor.set(1, 0.5);
         lblScore.position.set(155, -155);
         
@@ -169,12 +170,15 @@ export class LeaderboardModal extends Container {
             this.rowsContainer.removeChildren();
             if (!entries || entries.length === 0) {
                 const emptyText = new Text({
-                    text: "Chưa có thành tích kỷ lục.",
+                    text: t("leaderboard.empty").replace(/<br\/>/g, "\n"),
                     style: new TextStyle({
                         fontFamily: ['Be Vietnam Pro', 'sans-serif'],
-                        fontSize: 16,
+                        fontSize: 15,
                         fill: 0x7E57C2,
-                        fontWeight: "bold"
+                        fontWeight: "bold",
+                        align: 'center',
+                        wordWrap: true,
+                        wordWrapWidth: 360
                     })
                 });
                 emptyText.anchor.set(0.5);
@@ -239,7 +243,7 @@ export class LeaderboardModal extends Container {
         this.modal.addChild(myAvatar);
         
         const effUser = getEffectiveUser();
-        const playerName = effUser ? effUser.name : (winkGame?.isAuthenticated ? "Thành viên" : "Bạn (Khách)");
+        const playerName = effUser ? effUser.name : (winkGame?.isAuthenticated ? t("menu.member") : t("leaderboard.youGuest"));
         this.myName = new Text({ text: playerName, style: new TextStyle({ ...rowStyle, fill: 0xFF8F00 }) });
         this.myName.anchor.set(0, 0.5);
         this.myName.position.set(-80, 165);

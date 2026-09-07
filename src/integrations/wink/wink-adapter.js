@@ -34,6 +34,8 @@ function newRoundId() {
   return `round-${Date.now().toString(16)}-${random}`;
 }
 
+import { i18n } from '../../system/I18nManager.js';
+
 export class WinkGameIntegration {
   /** @type {Set<string>} */
   #completedRounds = new Set();
@@ -46,6 +48,7 @@ export class WinkGameIntegration {
 
   constructor() {
     this.observe((state) => {
+      try { i18n.syncFromWink(state); } catch {}
       if (state?.phase === 'ready_authenticated' && !this.#cachedPersonalBest) {
         this.getPersonalBest().catch(() => {});
       }

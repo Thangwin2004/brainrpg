@@ -14,6 +14,7 @@ import { winkGame } from '../integrations/wink/wink-adapter.js';
 import gsap from 'gsap';
 import { generatePuzzle, resolveEncounter, hasSafeMove, START_POWER } from '../core/levelRules.js';
 import { captureTurn } from '../core/rollbackState.js';
+import { t } from '../system/I18nManager.js';
 
 export class GameScene extends Container {
     init(game) {
@@ -326,7 +327,7 @@ export class GameScene extends Container {
         const { width, height } = this.game.app.screen;
 
         const announceText = new Text({
-            text: `TẦNG ${this.floor}`,
+            text: t("hud.floor", { floor: this.floor }),
             style: new TextStyle({
                 fontFamily: ['Be Vietnam Pro', 'sans-serif'],
                 fontSize: 64,
@@ -557,7 +558,7 @@ export class GameScene extends Container {
                 this.turnCount++;
                 // Lose! (Retry puzzle floor)
                 this.player.spendPower(this.player.power); // Zero out for effect
-                this.showFloatingText(wPos.x, wPos.y, `Thất bại`, 0xFF0000);
+                this.showFloatingText(wPos.x, wPos.y, t("hud.defeat"), 0xFF0000);
                 this.handleDefeat();
                 return;
             }
@@ -599,7 +600,7 @@ export class GameScene extends Container {
                 this.rollbackBusy = false;
                 this.isProcessingSwipe = recovering;
                 this.updateRollbackUI();
-                if (recovering) this.showReviveOffer('Chưa nhận được lượt hoàn tác. Bạn có thể thử lại.');
+                if (recovering) this.showReviveOffer(t("revive.adFailed"));
                 else this.statusText.text = 'Chưa nhận được lượt hoàn tác. Bàn cờ và lịch sử được giữ nguyên.';
                 return;
             }
@@ -675,7 +676,7 @@ export class GameScene extends Container {
         overlay.style.cssText = 'position:fixed;top:0;left:0;width:100dvw;height:100dvh;background:rgba(0,0,0,0.75);backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px);display:flex;align-items:center;justify-content:center;z-index:10000;';
 
         const card = document.createElement('div');
-        card.style.cssText = 'background:#ffffff;border-radius:28px;width:340px;padding:32px 24px;display:flex;flex-direction:column;align-items:center;text-align:center;box-sizing:border-box;font-family:Be Vietnam Pro, sans-serif;box-shadow:0 20px 50px rgba(126,87,194,0.3);';
+        card.style.cssText = 'background:#fbfaf5;border:4.5px solid #B39DDB;box-shadow:inset 0 0 0 2.5px #EDE7F6, 0 6px 0 #7E57C2, 0 18px 40px rgba(126,87,194,0.35);border-radius:28px;width:340px;padding:32px 24px;display:flex;flex-direction:column;align-items:center;text-align:center;box-sizing:border-box;font-family:Be Vietnam Pro, sans-serif;';
 
         const handleResize = () => {
             const scale = Math.min(1, (window.innerWidth - 24) / 340,
@@ -696,40 +697,40 @@ export class GameScene extends Container {
             .revive-title {
                 color: #453268;
                 font-size: 20px;
-                font-weight: 700;
+                font-weight: 800;
                 margin-bottom: 15px;
                 letter-spacing: 0.5px;
             }
             .heart-icon {
-                font-size: 90px;
+                font-size: 84px;
                 line-height: 1;
-                margin-bottom: 22px;
+                margin-bottom: 18px;
                 animation: heartbeat 1.4s infinite ease-in-out;
                 filter: drop-shadow(0 8px 16px rgba(179,157,219,0.4));
             }
             .revive-3d-btn {
                 width: 220px;
-                height: 54px;
-                border-radius: 27px;
+                height: 52px;
+                border-radius: 26px;
                 border: 3px solid #ffffff;
-                background: linear-gradient(to bottom, #FF8A80, #E57373);
-                box-shadow: 0 4px 0 #D32F2F, 0 8px 20px rgba(126,87,194,0.15);
+                background: linear-gradient(180deg, #66BB6A 0%, #388E3C 100%);
+                box-shadow: 0 5px 0 #1B5E20, 0 8px 20px rgba(126,87,194,0.15);
                 color: #ffffff;
                 font-family:'Be Vietnam Pro', sans-serif;
-                font-size: 22px;
-                font-weight: 700;
+                font-size: 20px;
+                font-weight: 800;
                 display: flex;
                 align-items: center;
                 justify-content: center;
                 gap: 10px;
                 cursor: pointer;
                 transition: transform 0.1s ease;
-                margin-bottom: 16px;
+                margin-bottom: 14px;
                 padding: 0;
             }
             .revive-3d-btn:active {
                 transform: translateY(3px);
-                box-shadow: 0 1px 0 #D32F2F, 0 3px 6px rgba(126,87,194,0.1);
+                box-shadow: 0 1px 0 #1B5E20, 0 3px 6px rgba(126,87,194,0.1);
             }
             .skip-btn-text {
                 font-size: 14px;
@@ -745,13 +746,13 @@ export class GameScene extends Container {
         <div class="revive-title">${this.defeatReason}</div>
         <div class="heart-icon">💖</div>
         <button class="revive-3d-btn" id="btn-revive">
-            <img src="/assest/iconbtn/images.png" style="height: 28px; width: auto;">
-            CHƠI LẠI ↻
+            <img src="/assest/iconbtn/images.webp" style="height: 26px; width: auto;">
+            ${t("revive.retry")}
         </button>
-        <div style="font-size:13px;color:#453268;margin-bottom:16px">Xem quảng cáo để chơi lại cùng bản đồ, với 10 sức mạnh.</div>
+        <div style="font-size:13px;color:#453268;margin-bottom:16px">${t("revive.prompt")}</div>
         ${message ? '<div style="font-size:13px;color:#8B3D2C;margin-bottom:12px">' + message + '</div>' : ''}
-        ${this.moveHistory.length ? '<button id="btn-undo-defeat" style="padding:12px 20px;margin-bottom:16px;border-radius:20px;border:0;background:#EDE7F6;color:#453268;font:inherit;cursor:pointer">' + (this.freeRollbacks > 0 ? 'Hoàn tác · Còn ' + this.freeRollbacks + ' lượt miễn phí' : 'Xem QC · Hoàn tác 1 bước') + '</button>' : ''}
-        <div class="skip-btn-text" id="btn-skip">Không, cảm ơn</div>
+        ${this.moveHistory.length ? '<button id="btn-undo-defeat" style="padding:10px 18px;margin-bottom:14px;border-radius:20px;border:1.5px solid #D1C4E9;background:#EDE7F6;color:#453268;font:inherit;font-weight:700;cursor:pointer">' + (this.freeRollbacks > 0 ? t("revive.undoFree", { count: this.freeRollbacks }) : t("revive.undoAd")) + '</button>' : ''}
+        <div class="skip-btn-text" id="btn-skip">${t("actions.skip")}</div>
     `;
 
         overlay.appendChild(card);

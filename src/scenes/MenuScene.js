@@ -5,6 +5,7 @@ import { AssetManager } from '../managers/AssetManager.js';
 import { AudioManager } from '../managers/AudioManager.js';
 import { SettingsModal } from '../ui/SettingsModal.js';
 import { LeaderboardModal } from '../ui/LeaderboardModal.js';
+import { i18n, t } from '../system/I18nManager.js';
 
 export class MenuScene extends Container {
   init(game) {
@@ -46,7 +47,7 @@ export class MenuScene extends Container {
     this.addChild(this.titleContainer);
     
     this.titleText = new Text({
-      text: "HÀNH TRÌNH\nBỘ LẠC",
+      text: t("game.title"),
       style: new TextStyle({ 
         fontFamily: ['Baloo 2', 'Be Vietnam Pro', 'sans-serif'],
         fill: 0xFFFFFF, 
@@ -62,7 +63,7 @@ export class MenuScene extends Container {
     this.titleContainer.addChild(this.titleText);
     
     // 4. Main Play Button (Capsule, Warm Gold)
-    this.playBtn = new CapsuleBtn("CHƠI NGAY", async () => {
+    this.playBtn = new CapsuleBtn(t("menu.play"), async () => {
       if (this.startingGame) return;
       this.startingGame = true;
       this.playBtn.eventMode = 'none';
@@ -109,6 +110,14 @@ export class MenuScene extends Container {
     }, 32, '#D1C4E9', '#B39DDB', '#9575CD'); // Soft Purple
     this.settingsBtn.position.set(width / 2 + 50, height * 0.7);
     this.addChild(this.settingsBtn);
+
+    // Language change observer for immediate menu refresh
+    this._unsubI18n = i18n.subscribe(() => {
+      this.titleText.text = t("game.title");
+      if (this.playBtn && this.playBtn.text) {
+        this.playBtn.text.text = t("menu.play");
+      }
+    });
     
     // 6. Loading Progress Bar Container
     this.loadingContainer = new Container();
