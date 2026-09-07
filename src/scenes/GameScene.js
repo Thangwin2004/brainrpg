@@ -66,13 +66,8 @@ export class GameScene extends Container {
         this.statsBar.onRollback = this.handleRollback.bind(this);
         this.addChild(this.statsBar);
 
-        this.statusText = new Text({ text: '', style: {
-            fontFamily: ['Be Vietnam Pro', 'sans-serif'], fontSize: 14, fontWeight: '700',
-            fill: 0xffffff, align: 'center', wordWrap: true, wordWrapWidth: width - 24,
-            stroke: { color: 0x453268, width: 1.5 },
-        } });
-        this.statusText.anchor.set(0.5, 1);
-        this.addChild(this.statusText);
+        this.statusText = new Text({ text: '' });
+        this.statusText.visible = false;
 
         this.swipeManager = new SwipeManager(game.app, this.handleSwipe.bind(this), {
             canStart: () => !this.isProcessingSwipe && !this.inputBlocked,
@@ -124,7 +119,7 @@ export class GameScene extends Container {
         if (this.cols && this.rows) {
             const headerH = compactLandscape ? 0 : (this.statsBar ? this.statsBar.totalHeight : 100) + topMargin;
             const gap = compactLandscape ? 32 : isLandscape ? 16 : Math.max(24, height * 0.04);
-            const bottomPad = compactLandscape ? 54 : 76;
+            const bottomPad = compactLandscape ? 24 : 36;
             const availH = Math.max(40, height - headerH - gap - bottomPad);
 
             let maxGridPx;

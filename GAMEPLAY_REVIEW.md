@@ -41,3 +41,36 @@
 - Mạng sandbox chặn Google Fonts; kiểm tra hình ảnh dùng font dự phòng. Chưa xác nhận tải font từ mạng thật, thời gian tải <5 giây, FPS trên thiết bị yếu hoặc Safari/Firefox.
 - Đăng nhập API, bảng xếp hạng, toàn màn hình và nghe âm thanh thực tế chưa được kiểm chứng lại trong đợt sửa gameplay này. Các chỉnh sửa tích hợp/bảng xếp hạng đã có sẵn trong working tree không thuộc thay đổi này.
 - Đường thắng được kiểm tra không đồng nghĩa mọi lựa chọn đều có thể thắng. Sàn sập vẫn cho phép người chơi tự đi vào ngõ cụt; hoàn tác giúp sửa lựa chọn đó. Độ khó/cảm giác chơi dài hạn cần phản hồi từ chơi thử thực tế.
+
+## Rà soát phân bố quái/vật phẩm — 2026-09-07
+
+Đợt kiểm tra này tập trung vào bộ sinh màn, giữ nguyên các thay đổi bố cục GameScene có sẵn.
+
+### Vấn đề đo được trước khi sửa
+
+Lấy 500 seed tại mỗi mốc tầng 1, 2, 3, 4, 5, 10, 20, 50, 100: tầng 1 có 0–12 quái thường; tầng 4 có 0–7 bẫy chia và 0–5 đồ nhân; một số quái thường mạnh hơn boss. Xác suất độc lập từng ô khiến hai bản đồ cùng tầng chênh lệch lớn.
+
+### Phân bố mới (không tính 1 boss mỗi màn)
+
+| Tầng | Bàn | Quái thường | Đồ cộng | Chia ÷2 | Nhân ×2 |
+| --- | --- | --- | --- | --- | --- |
+| 1–2 | 5×6 | 3 | 7 | 0 | 0 |
+| 3 | 5×6 | 5 | 7 | 1 | 0 |
+| 4–5 | 6×7 | 7 | 7 | 1 | 1 |
+| 6–10 | 6×7 | 9 | 7 | 2 | 1 |
+| 11–200 | 6×7 | 10 | 8 | 3 | 1 |
+
+- Mở đầu có một đồ +2 trên đường thắng. Quái kề điểm xuất phát có sức mạnh dưới 10; bẫy và đồ nhân cách điểm xuất phát hơn 2 ô.
+- Quái nhánh phụ được chia vào ba vùng của bàn và tăng chỉ số theo độ sâu. Quái thường yếu hơn boss.
+- Bẫy chia không đứng cạnh nhau, không nằm trên đường thắng đã kiểm chứng. Đồ nhân giới hạn một món để tránh chuỗi nhân phá cân bằng.
+- Đồ cộng nhánh phụ tăng theo tầng và vị trí; không giữ cố định +2…+5 trong khi boss tăng mãi.
+- Boss giữ công thức 15 + 5 × tầng. Mỗi tầng bắt đầu từ 10; đường thắng tăng sức mạnh đủ vượt boss khoảng 10%, không quay lại sàn đã sập.
+- Từ tầng 11, giữ mật độ để bàn không quá đông; chỉ số tiếp tục tăng. Bố cục và vị trí vẫn ngẫu nhiên, nhưng số lượng có ngân sách rõ ràng.
+
+### Kiểm tra tự động mới
+
+10 bài kiểm tra đạt: 10.000 lượt sinh màn kiểm tra đường thắng, 20.000 lượt sinh màn kiểm tra ngân sách từng loại, khoảng cách bẫy, mở đầu an toàn, sức mạnh quái và mật độ tối đa 60%; bổ sung các mốc chuyển nhóm và nguồn random cực trị, gồm tầng 1.000 và 1.000.000. Các bài combat, dead-end, rollback và input cũ tiếp tục đạt.
+
+Đây là kiểm chứng khả năng giải và các giới hạn phân bố; không phải tỷ lệ thắng của người chơi. Cần phản hồi chơi dài hạn để tinh chỉnh độ khó cảm nhận.
+
+Kiểm tra trình duyệt trong đợt cân bằng: chơi màn 1 bằng phím mũi tên, nhặt +2 (10 → 12), đánh quái 3 (→ 15), nhặt +3 (→ 18), đánh quái 15 (→ 33), thắng boss 20 và chuyển màn 2 với sức mạnh 10, boss 25. Build cuối bằng pnpm build thành công. Chưa chơi thủ công hết các tầng; tầng cao được kiểm tra bằng mô phỏng luật thực tế nêu trên.
