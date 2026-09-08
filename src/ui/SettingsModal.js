@@ -146,7 +146,7 @@ export class SettingsModal extends Container {
           <option value="en">${t('settings.english')}</option>
           <option value="vi">${t('settings.vietnamese')}</option>
         `;
-        select.value = i18n.language;
+        select.value = i18n.currentLanguage;
 
         select.addEventListener('change', () => {
           AudioManager.playClickSFX();
@@ -160,7 +160,7 @@ export class SettingsModal extends Container {
             <option value="en">${t('settings.english')}</option>
             <option value="vi">${t('settings.vietnamese')}</option>
           `;
-          select.value = i18n.language;
+          select.value = i18n.currentLanguage;
           if (versionText) versionText.innerText = t('settings.version');
           if (closeBtn) closeBtn.setAttribute('aria-label', t('actions.cancel'));
           if (restartBtn) restartBtn.setAttribute('aria-label', t('actions.replay'));

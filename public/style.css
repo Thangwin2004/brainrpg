@@ -416,12 +416,12 @@ code {
 .game-settings-language-row {
   width: 100%;
   height: 64px;
-  padding: 0 16px;
+  padding: 0 10px;
   box-sizing: border-box;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 16px;
+  gap: 8px;
   border: 2.5px solid #d1c4e9;
   border-radius: 12px;
   background: #ffffff;
@@ -431,16 +431,21 @@ code {
 .game-settings-language-row .game-settings-label,
 .game-settings-language-row span {
   color: #4a148c;
-  font-size: 17px;
+  display: flex;
+  align-items: center;
+  flex: 1 1 auto;
+  min-width: 0;
+  white-space: nowrap;
+  font-size: 16px;
   letter-spacing: 0.8px;
   font-weight: bold;
 }
 
 .game-settings-language-select {
-  width: 136px;
+  width: 122px;
   height: 42px;
-  flex: 0 0 136px;
-  padding: 0 32px 0 16px;
+  flex: 0 0 122px;
+  padding: 0 26px 0 10px;
   appearance: none;
   -webkit-appearance: none;
   border: 2px solid #72d58f;

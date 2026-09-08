@@ -117,7 +117,7 @@ const messages = {
     "rollback.adDetail": "Xem QC · Lùi 1 bước",
     "rollback.adBadge": "QC",
 
-    "tutorial.title": "HƯỚNG DẪN TÂN THỦ",
+    "tutorial.title": "HƯỚNG DẪN",
     "tutorial.rule1": "👆 Vuốt trên bàn hoặc dùng phím mũi tên. Mỗi lần đi 1 ô.",
     "tutorial.rule2": "⚔️ Phải MẠNH HƠN quái để thắng và cộng sức mạnh của nó. Bằng nhau là thua.",
     "tutorial.rule3": "🍔 + là cộng, × là nhân; ÷ là bẫy chia sức mạnh, làm tròn xuống.",

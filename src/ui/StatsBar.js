@@ -174,6 +174,7 @@ export class StatsBar extends Container {
   }
 
   forceUpdateRollbacks(count, historySize, blocked = false, busy = false) {
+    if (this.destroyed || !this.rollbackBtn || this.rollbackBtn.destroyed) return;
     this.rollbackBtn.setState({ count, historySize, blocked, busy });
   }
 }

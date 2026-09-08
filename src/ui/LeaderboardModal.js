@@ -1,7 +1,7 @@
 import { Container, Graphics, FillGradient, Text, TextStyle, BlurFilter } from 'pixi.js';
 import { IconBtn } from './Button.js';
 import { winkGame } from '../integrations/wink/wink-adapter.js';
-import { t } from '../system/I18nManager.js';
+import { i18n, t } from '../system/I18nManager.js';
 
 function getEffectiveUser() {
   if (winkGame && winkGame.personalBest?.displayName) {
@@ -31,6 +31,7 @@ export class LeaderboardModal extends Container {
         super();
         this.onClose = onClose;
         this.initUI();
+        this._unsubI18n = i18n.subscribe(() => this.applyLanguage());
         
         // Blur siblings when added to simulate backdrop-filter
         this.on('added', () => {
@@ -57,6 +58,10 @@ export class LeaderboardModal extends Container {
                 }
                 this.siblingFilters.clear();
                 this.siblingFilters = null;
+            }
+            if (this._unsubI18n) {
+                this._unsubI18n();
+                this._unsubI18n = null;
             }
         });
     }
@@ -98,7 +103,7 @@ export class LeaderboardModal extends Container {
         this.modal.addChild(cardFace);
 
         // 4. Floating 3D Title Ribbon (Purple)
-        const ribbonW = 240;
+        const ribbonW = 230;
         const ribbonH = 42;
         const ribbonY = -cardH / 2;
         const ribbonRadius = ribbonH / 2;
@@ -117,19 +122,19 @@ export class LeaderboardModal extends Container {
           .fill({ color: 0xffffff, alpha: 0.25 });
         this.modal.addChild(ribbon);
 
-        const titleText = new Text({
+        this.titleText = new Text({
           text: t("leaderboard.title"),
           style: new TextStyle({
             fontFamily: ['Be Vietnam Pro', 'sans-serif'],
-            fontSize: 22,
+            fontSize: 20,
             fill: 0xffffff,
             fontWeight: "900",
-            letterSpacing: 1
+            letterSpacing: 1.2
           }),
         });
-        titleText.anchor.set(0.5);
-        titleText.position.set(0, ribbonY);
-        this.modal.addChild(titleText);
+        this.titleText.anchor.set(0.5);
+        this.titleText.position.set(0, ribbonY);
+        this.modal.addChild(this.titleText);
         
         // Header Labels
         const headerStyle = new TextStyle({
@@ -139,19 +144,19 @@ export class LeaderboardModal extends Container {
             fontWeight: "900"
         });
         
-        const lblRank = new Text({ text: t("leaderboard.rankHeader"), style: headerStyle });
-        lblRank.anchor.set(0.5);
-        lblRank.position.set(-160, -155);
+        this.lblRank = new Text({ text: t("leaderboard.rankHeader"), style: headerStyle });
+        this.lblRank.anchor.set(0.5);
+        this.lblRank.position.set(-160, -155);
         
-        const lblName = new Text({ text: t("leaderboard.playerHeader"), style: headerStyle });
-        lblName.anchor.set(0, 0.5);
-        lblName.position.set(-80, -155);
+        this.lblName = new Text({ text: t("leaderboard.playerHeader"), style: headerStyle });
+        this.lblName.anchor.set(0, 0.5);
+        this.lblName.position.set(-80, -155);
         
-        const lblScore = new Text({ text: t("leaderboard.floorHeader"), style: headerStyle });
-        lblScore.anchor.set(1, 0.5);
-        lblScore.position.set(155, -155);
+        this.lblScore = new Text({ text: t("leaderboard.floorHeader"), style: headerStyle });
+        this.lblScore.anchor.set(1, 0.5);
+        this.lblScore.position.set(155, -155);
         
-        this.modal.addChild(lblRank, lblName, lblScore);
+        this.modal.addChild(this.lblRank, this.lblName, this.lblScore);
 
         this.rowsContainer = new Container();
         this.modal.addChild(this.rowsContainer);
@@ -167,6 +172,7 @@ export class LeaderboardModal extends Container {
         });
 
         const renderRows = (entries) => {
+            this.currentEntries = entries || [];
             this.rowsContainer.removeChildren();
             if (!entries || entries.length === 0) {
                 const emptyText = new Text({
@@ -265,6 +271,8 @@ export class LeaderboardModal extends Container {
             this.myName.text = pName;
             this.myScoreText.text = `${pScore}`;
         };
+        this.renderRows = renderRows;
+        this.updateFooter = updateFooter;
 
         const defaultEntries = myScoreLocal > 0 ? [{ name: playerName, score: myScoreLocal, rank: 1 }] : [];
         renderRows(defaultEntries);
@@ -297,6 +305,23 @@ export class LeaderboardModal extends Container {
         // Position at top-right, just like SettingsModal
         this.closeBtn.position.set(cardW / 2 - 20, -cardH / 2 + 20);
         this.modal.addChild(this.closeBtn);
+    }
+
+    applyLanguage() {
+        if (this.titleText && !this.titleText.destroyed) {
+            this.titleText.text = t("leaderboard.title");
+        }
+        if (this.lblRank && !this.lblRank.destroyed) {
+            this.lblRank.text = t("leaderboard.rankHeader");
+        }
+        if (this.lblName && !this.lblName.destroyed) {
+            this.lblName.text = t("leaderboard.playerHeader");
+        }
+        if (this.lblScore && !this.lblScore.destroyed) {
+            this.lblScore.text = t("leaderboard.floorHeader");
+        }
+        if (this.renderRows) this.renderRows(this.currentEntries || []);
+        if (this.updateFooter) this.updateFooter(winkGame?.personalBest);
     }
     
     resize(width, height) {

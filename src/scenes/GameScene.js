@@ -4,7 +4,6 @@ import { Monster } from '../entities/Monster.js';
 import { Item } from '../entities/Item.js';
 import { SwipeManager } from '../managers/SwipeManager.js';
 import { StatsBar } from '../ui/StatsBar.js';
-import { TutorialModal } from '../ui/TutorialModal.js';
 import { AdManager } from '../managers/AdManager.js';
 import { AudioManager } from '../managers/AudioManager.js';
 import { GameOverScene } from './GameOverScene.js';
@@ -17,6 +16,11 @@ import { captureTurn } from '../core/rollbackState.js';
 import { i18n, t } from '../system/I18nManager.js';
 
 export class GameScene extends Container {
+    constructor(startFloor = 1) {
+        super();
+        this.startFloor = Math.max(1, Math.floor(Number(startFloor) || 1));
+    }
+
     init(game) {
         this.game = game;
         const { width, height } = game.app.screen;
@@ -43,11 +47,10 @@ export class GameScene extends Container {
         this.bgContainer.filters = [this.bgFilter];
 
         // Game State
-        this.floor = 1;
+        this.floor = this.startFloor;
 
         // ── Wink: start a new round ──
         this._winkRound = winkGame.startRound();
-        this._stopLanguageObserver = i18n.subscribe(() => this.applyLanguage());
         this.isProcessingSwipe = false;
         this.freeRollbacks = 3;
         this.turnCount = 0;
@@ -251,20 +254,9 @@ export class GameScene extends Container {
         this.gridContainer.setChildIndex(this.player, this.gridContainer.children.length - 1);
 
         this.updateStatsUI();
-        if (floor === 1 && !this.tutorialShown) {
-            this.tutorialShown = true;
-            this.isProcessingSwipe = true; // Keep it true to block swipe
-            const { width, height } = this.game.app.screen;
-            this.tutorialModal = new TutorialModal(width, height, () => {
-                this.tutorialModal = null;
-                this.isProcessingSwipe = false;
-                if (this.statsBar) this.updateRollbackUI();
-            });
-            this.addChild(this.tutorialModal);
-        } else {
-            this.isProcessingSwipe = false;
-            this.updateRollbackUI();
-        }
+        // Tutorial is opened from the main menu. Start gameplay immediately.
+        this.isProcessingSwipe = false;
+        this.updateRollbackUI();
     }
 
     updateCellVisuals(r, c) {
@@ -877,6 +869,8 @@ export class GameScene extends Container {
                 this.isProcessingSwipe = false;
                 if (this.statsBar) this.updateRollbackUI();
                 this.player.resetPower(10);
+                this.floor = 1;
+                this.levelLayout = null;
                 this.generateLevel(this.floor);
             },
             () => {
@@ -892,6 +886,8 @@ export class GameScene extends Container {
 
 
     updateRollbackUI() {
+        if (this.destroyed || !this.statsBar || this.statsBar.destroyed
+            || !this.statsBar.rollbackBtn || this.statsBar.rollbackBtn.destroyed) return;
         this.statsBar.forceUpdateRollbacks(this.freeRollbacks, this.moveHistory.length,
             this.isProcessingSwipe || this.inputBlocked, this.rollbackBusy);
     }
@@ -956,6 +952,7 @@ export class GameScene extends Container {
     }
 
     applyLanguage() {
+        if (this.destroyed) return;
         if (this.statsBar && typeof this.statsBar.applyLanguage === 'function') {
             this.statsBar.applyLanguage();
         }

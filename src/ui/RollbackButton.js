@@ -51,6 +51,8 @@ export class RollbackButton extends Container {
     }
 
     setState(state) {
+        if (this.destroyed || !this.content || !this.face || !this.badge || !this.arrow
+            || !this.title || !this.detail || !this.countText) return;
         const next = rollbackPresentation(state);
         const key = JSON.stringify(next);
         if (key === this.stateKey) return;
@@ -72,6 +74,14 @@ export class RollbackButton extends Container {
         this.title.text = next.title;
         this.detail.text = next.detail;
         this.countText.text = next.badge;
+        // Keep localized labels clear of the count badge. Vietnamese labels
+        // are wider than the English fallback and otherwise the final glyph
+        // can sit underneath the badge.
+        this.title.scale.x = 1;
+        const titleMaxWidth = 62;
+        if (this.title.width > titleMaxWidth) {
+            this.title.scale.x = titleMaxWidth / this.title.width;
+        }
         this.title.style.fill = ink;
         this.detail.style.fill = ink;
         this.arrow.tint = ink;

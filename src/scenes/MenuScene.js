@@ -5,6 +5,7 @@ import { AssetManager } from '../managers/AssetManager.js';
 import { AudioManager } from '../managers/AudioManager.js';
 import { SettingsModal } from '../ui/SettingsModal.js';
 import { LeaderboardModal } from '../ui/LeaderboardModal.js';
+import { TutorialModal } from '../ui/TutorialModal.js';
 import { i18n, t } from '../system/I18nManager.js';
 
 export class MenuScene extends Container {
@@ -94,8 +95,28 @@ export class MenuScene extends Container {
           this.addChild(this.lbModal);
       }
     }, 32, '#D1C4E9', '#B39DDB', '#9575CD'); // Soft Purple
-    this.lbBtn.position.set(width / 2 - 50, height * 0.7);
+    this.lbBtn.position.set(width / 2 - 76, height * 0.7);
     this.addChild(this.lbBtn);
+
+    const tutorialSvg = `<svg viewBox="0 0 24 24" width="24" height="24"><circle cx="12" cy="12" r="9" fill="none" stroke="#ffffff" stroke-width="2.5"/><path d="M9.7 9a2.35 2.35 0 1 1 3.7 1.9c-.95.66-1.4 1.05-1.4 2.1" fill="none" stroke="#ffffff" stroke-width="2.5" stroke-linecap="round"/><circle cx="12" cy="16.5" r="1.2" fill="#ffffff"/></svg>`;
+    this.tutorialBtn = new IconBtn(tutorialSvg, () => {
+      if (!this.tutorialModal) {
+        this.tutorialModal = new TutorialModal(
+          this.game.app.screen.width,
+          this.game.app.screen.height,
+          () => {
+            if (this.tutorialModal) {
+              this.removeChild(this.tutorialModal);
+              this.tutorialModal = null;
+            }
+          },
+        );
+        this.tutorialModal.resize(this.game.app.screen.width, this.game.app.screen.height);
+        this.addChild(this.tutorialModal);
+      }
+    }, 32, '#D1C4E9', '#B39DDB', '#9575CD');
+    this.tutorialBtn.position.set(width / 2, height * 0.7);
+    this.addChild(this.tutorialBtn);
 
     const settingsSvg = `<svg viewBox="0 0 24 24" width="24" height="24"><path fill="#ffffff" d="M19.14,12.94c0.04-0.3,0.06-0.61,0.06-0.94c0-0.32-0.02-0.64-0.06-0.94l2.03-1.58c0.18-0.14,0.23-0.41,0.12-0.61 l-1.92-3.32c-0.12-0.22-0.37-0.29-0.59-0.22l-2.39,0.96c-0.5-0.38-1.03-0.7-1.62-0.94L14.4,2.81c-0.04-0.24-0.24-0.41-0.48-0.41 h-3.84c-0.24,0-0.43,0.17-0.47,0.41L9.25,5.35C8.66,5.59,8.12,5.92,7.63,6.29L5.24,5.33c-0.22-0.08-0.47,0-0.59,0.22L2.73,8.87 C2.62,9.08,2.66,9.34,2.86,9.48l2.03,1.58C4.84,11.36,4.8,11.69,4.8,12s0.02,0.64,0.06,0.94l-2.03,1.58 c-0.18,0.14-0.23,0.41-0.12,0.61l1.92,3.32c0.12,0.22,0.37,0.29,0.59,0.22l2.39-0.96c0.5,0.38,1.03,0.7,1.62,0.94l0.36,2.54 c0.05,0.24,0.24,0.41,0.48,0.41h3.84c0.24,0,0.43-0.17,0.47-0.41l0.36-2.54c0.59-0.24,1.13-0.56,1.62-0.94l2.39,0.96 c0.22,0.08,0.47,0,0.59-0.22l1.92-3.32c0.12-0.22,0.07-0.49-0.12-0.61L19.14,12.94z M12,15.6c-1.98,0-3.6-1.62-3.6-3.6 s1.62-3.6,3.6-3.6s3.6,1.62,3.6,3.6S13.98,15.6,12,15.6z"/></svg>`;
     this.settingsBtn = new IconBtn(settingsSvg, () => {
@@ -108,7 +129,7 @@ export class MenuScene extends Container {
           this.addChild(this.settingsModal);
       }
     }, 32, '#D1C4E9', '#B39DDB', '#9575CD'); // Soft Purple
-    this.settingsBtn.position.set(width / 2 + 50, height * 0.7);
+    this.settingsBtn.position.set(width / 2 + 76, height * 0.7);
     this.addChild(this.settingsBtn);
 
     // Language change observer for immediate menu refresh
@@ -159,6 +180,7 @@ export class MenuScene extends Container {
     
     this.playBtn.visible = false;
     this.lbBtn.visible = false;
+    this.tutorialBtn.visible = false;
     this.settingsBtn.visible = false;
     
     // Animation Ticker
@@ -199,7 +221,7 @@ export class MenuScene extends Container {
     }
     
     // Pulse Play Button
-    if (this.playBtn && this.playBtn.visible && !this.lbModal && !this.settingsModal) {
+    if (this.playBtn && this.playBtn.visible && !this.lbModal && !this.tutorialModal && !this.settingsModal) {
         const scale = 1 + Math.sin(this.tickTime * 1.5) * 0.03;
         this.playBtn.scale.set(scale);
     } else if (this.playBtn) {
@@ -268,6 +290,7 @@ export class MenuScene extends Container {
     this.loadingContainer.visible = false;
     this.playBtn.visible = true;
     this.lbBtn.visible = true;
+    this.tutorialBtn.visible = true;
     this.settingsBtn.visible = true;
   }
   
@@ -294,14 +317,16 @@ export class MenuScene extends Container {
       }
       
       if (this.playBtn) this.playBtn.position.set(width / 2, height * 0.55);
-      if (this.lbBtn) this.lbBtn.position.set(width / 2 - 50, height * 0.7);
-      if (this.settingsBtn) this.settingsBtn.position.set(width / 2 + 50, height * 0.7);
+      if (this.lbBtn) this.lbBtn.position.set(width / 2 - 76, height * 0.7);
+      if (this.tutorialBtn) this.tutorialBtn.position.set(width / 2, height * 0.7);
+      if (this.settingsBtn) this.settingsBtn.position.set(width / 2 + 76, height * 0.7);
       
       if (this.loadingContainer) {
           this.loadingContainer.position.set(width / 2, height * 0.78);
       }
       
       if (this.lbModal) this.lbModal.resize(width, height);
+      if (this.tutorialModal) this.tutorialModal.resize(width, height);
       if (this.settingsModal) this.settingsModal.resize(width, height);
   }
 

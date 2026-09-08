@@ -1,6 +1,6 @@
 import { Container, Graphics, FillGradient, Text, TextStyle, BlurFilter } from 'pixi.js';
 import { CapsuleBtn } from './Button.js';
-import { t } from '../system/I18nManager.js';
+import { i18n, t } from '../system/I18nManager.js';
 import gsap from 'gsap';
 
 export class TutorialModal extends Container {
@@ -33,7 +33,12 @@ export class TutorialModal extends Container {
                 this.siblingFilters.clear();
                 this.siblingFilters = null;
             }
+            if (this._unsubI18n) {
+                this._unsubI18n();
+                this._unsubI18n = null;
+            }
         });
+        this._unsubI18n = i18n.subscribe(() => this.applyLanguage());
 
         // Dark overlay backdrop
         this.overlay = new Graphics()
@@ -93,7 +98,7 @@ export class TutorialModal extends Container {
             .fill({ color: 0xffffff, alpha: 0.25 });
         this.panel.addChild(ribbon);
 
-        const title = new Text({
+        this.titleText = new Text({
             text: t("tutorial.title"),
             style: new TextStyle({
                 fontFamily: ['Be Vietnam Pro', 'sans-serif'],
@@ -103,9 +108,9 @@ export class TutorialModal extends Container {
                 letterSpacing: 1.2
             })
         });
-        title.anchor.set(0.5);
-        title.position.set(0, ribbonY);
-        this.panel.addChild(title);
+        this.titleText.anchor.set(0.5);
+        this.titleText.position.set(0, ribbonY);
+        this.panel.addChild(this.titleText);
 
         const rules = [
             t("tutorial.rule1"),
@@ -117,9 +122,11 @@ export class TutorialModal extends Container {
         ];
 
         let startY = -cardH / 2 + 48;
-        rules.forEach(rule => {
+        this.ruleTexts = [];
+        rules.forEach((rule, index) => {
+            const rowHeight = index === rules.length - 1 ? 68 : 52;
             const rowBg = new Graphics()
-                .roundRect(-cardW / 2 + 20, startY - 4, cardW - 40, 52, 10)
+                .roundRect(-cardW / 2 + 20, startY - 4, cardW - 40, rowHeight, 10)
                 .fill({ color: 0xFFFFFF, alpha: 0.9 })
                 .stroke({ color: 0xEADAFF, width: 1.5 });
             this.panel.addChild(rowBg);
@@ -139,12 +146,13 @@ export class TutorialModal extends Container {
             txt.anchor.set(0, 0);
             txt.position.set(-cardW / 2 + 28, startY + 1);
             this.panel.addChild(txt);
-            startY += 58;
+            this.ruleTexts.push(txt);
+            startY += rowHeight + 6;
         });
 
-        const startBtn = new CapsuleBtn(t("tutorial.understood"), () => this.close(), 190, 46, '#66BB6A', '#388E3C', '#1B5E20');
-        startBtn.position.set(0, cardH / 2 - 40);
-        this.panel.addChild(startBtn);
+        this.startBtn = new CapsuleBtn(t("tutorial.understood"), () => this.close(), 190, 46, '#66BB6A', '#388E3C', '#1B5E20');
+        this.startBtn.position.set(0, cardH / 2 - 58);
+        this.panel.addChild(this.startBtn);
 
         // Entrance animation
         this.resize(width, height);
@@ -162,6 +170,20 @@ export class TutorialModal extends Container {
         this.fitScale = Math.min(1, (width - 24) / 340, (height - 24) / 520);
         gsap.killTweensOf(this.panel.scale);
         this.panel.scale.set(this.fitScale);
+    }
+
+    applyLanguage() {
+        if (this.titleText && !this.titleText.destroyed) {
+            this.titleText.text = t("tutorial.title");
+        }
+        if (this.ruleTexts) {
+            this.ruleTexts.forEach((text, index) => {
+                text.text = t(`tutorial.rule${index + 1}`);
+            });
+        }
+        if (this.startBtn && typeof this.startBtn.setText === 'function') {
+            this.startBtn.setText(t("tutorial.understood"));
+        }
     }
 
     close() {
