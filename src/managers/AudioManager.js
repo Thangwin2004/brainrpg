@@ -17,6 +17,7 @@ export class AudioManager {
         this.sfxGain.gain.value = 0.85;
         this.isBgmMuted = false;
         this.isSfxMuted = false;
+        this.isParentMuted = false;
         
         // BGM Setup — "BGMM_Login.mp3" (Heroic tribal ambient, gentle for thinking)
         this.bgm = new Audio("/assest/music/BGMM_Login.mp3");
@@ -69,7 +70,7 @@ export class AudioManager {
         if (this.ctx && this.ctx.state === 'suspended') {
             this.ctx.resume();
         }
-        if (this.bgm && !this.isBgmMuted) {
+        if (this.bgm && !this.isBgmMuted && !this.isParentMuted) {
             this.bgm.play().catch(e => console.log("BGM deferred until interaction:", e));
         }
     }
@@ -77,8 +78,8 @@ export class AudioManager {
     static toggleBGM() {
         if (!this.ctx) this.init();
         this.isBgmMuted = !this.isBgmMuted;
-        this.bgmGain.gain.value = this.isBgmMuted ? 0 : 1;
-        if (!this.isBgmMuted) {
+        this.bgmGain.gain.value = this.isBgmMuted || this.isParentMuted ? 0 : 1;
+        if (!this.isBgmMuted && !this.isParentMuted) {
             this.playBGM();
         } else if (this.bgm) {
             this.bgm.pause();
@@ -89,8 +90,21 @@ export class AudioManager {
     static toggleSFX() {
         if (!this.ctx) this.init();
         this.isSfxMuted = !this.isSfxMuted;
-        this.sfxGain.gain.value = this.isSfxMuted ? 0 : 0.85;
+        this.sfxGain.gain.value = this.isSfxMuted || this.isParentMuted ? 0 : 0.85;
         return this.isSfxMuted;
+    }
+
+    static setParentMuted(muted) {
+        if (!this.ctx) this.init();
+        this.isParentMuted = Boolean(muted);
+        if (!this.ctx) return;
+        this.bgmGain.gain.value = this.isBgmMuted || this.isParentMuted ? 0 : 1;
+        this.sfxGain.gain.value = this.isSfxMuted || this.isParentMuted ? 0 : 0.85;
+        if (this.isParentMuted) {
+            this.bgm?.pause();
+        } else if (!this.isBgmMuted) {
+            this.playBGM();
+        }
     }
 
     static toggleMute() {
@@ -111,14 +125,14 @@ export class AudioManager {
         if (!this.ctx) return;
         if (this.wasContextRunningBeforeFocus) await this.ctx.resume();
         this.wasContextRunningBeforeFocus = false;
-        if (this.wasBgmPlayingBeforeFocus && !this.isBgmMuted) {
+        if (this.wasBgmPlayingBeforeFocus && !this.isBgmMuted && !this.isParentMuted) {
             await this.bgm.play().catch(() => {});
         }
         this.wasBgmPlayingBeforeFocus = false;
     }
 
     static playBufferSFX(key, volume = 0.5) {
-        if (!this.ctx || this.isSfxMuted) return;
+        if (!this.ctx || this.isSfxMuted || this.isParentMuted) return;
         if (this.ctx.state === 'suspended') this.ctx.resume();
         
         if (this.buffers && this.buffers[key]) {
@@ -181,7 +195,7 @@ export class AudioManager {
     }
     
     static playOscillator(type, startFreq, endFreq, duration) {
-        if (!this.ctx || this.isSfxMuted) return;
+        if (!this.ctx || this.isSfxMuted || this.isParentMuted) return;
         if (this.ctx.state === 'suspended') this.ctx.resume();
         
         const osc = this.ctx.createOscillator();

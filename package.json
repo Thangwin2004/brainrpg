@@ -7,9 +7,11 @@
     "test": "node --test tests/*.test.mjs",
     "test:browser": "node tests/browser-rollback.mjs",
     "dev": "vite",
+    "prebuild": "node scripts/verify-wink-sdk.mjs",
     "build": "vite build",
     "postbuild": "node scripts/prune-unused-public-assets.mjs",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "verify:wink-sdk": "node scripts/verify-wink-sdk.mjs"
   },
   "devDependencies": {
     "typescript": "~6.0.2",
