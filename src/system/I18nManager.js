@@ -186,33 +186,10 @@ function readStoredLanguage() {
   }
 }
 
-function readUrlLanguage() {
-  try {
-    const params = new window.URLSearchParams(window.location.search);
-    return normalizeLanguage(
-      params.get("locale") || params.get("lang") || params.get("language"),
-    );
-  } catch {
-    return null;
-  }
-}
-
-function readWinkLanguage(state) {
-  return normalizeLanguage(
-    state?.locale ||
-      state?.language ||
-      state?.preferences?.language ||
-      state?.preferences?.locale,
-  );
-}
-
 class I18nManager {
   constructor() {
     this.hasLocalOverride = Boolean(readStoredLanguage());
-    this.language =
-      readStoredLanguage() ||
-      readUrlLanguage() ||
-      "en";
+    this.language = readStoredLanguage() || "en";
     this.listeners = new Set();
     this.applyDocumentLanguage();
   }
@@ -247,11 +224,10 @@ class I18nManager {
     return true;
   }
 
-  syncFromWink(state) {
+  syncFromWink() {
     if (this.hasLocalOverride) return false;
-    const platformLanguage = readWinkLanguage(state) || readUrlLanguage();
-    if (!platformLanguage) return false;
-    return this.setLanguage(platformLanguage, { persist: false });
+    // Default is EN; player's choice is saved if changed in-game.
+    return false;
   }
 
   t(key, variables = {}) {
