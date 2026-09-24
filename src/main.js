@@ -22,9 +22,6 @@ window.onload = async () => {
     "800 1em 'Baloo 2'",
   ]);
 
-  const game = new Game();
-  await game.init();
-
   const focusPause = installFocusPause({
     isRunning: () => Boolean(Ticker.shared.started),
     pause: () => Ticker.shared.stop(),
@@ -38,8 +35,16 @@ window.onload = async () => {
     onResume: focusPause.resumeFromHost,
     onMute: () => AudioManager.setParentMuted?.(true),
     onUnmute: () => AudioManager.setParentMuted?.(false),
+    onLocale: (locale) => i18n.syncFromWink(locale),
   });
 
   winkGame.observe((state) => i18n.syncFromWink(state));
   i18n.syncFromWink(winkGame.state);
+
+  const game = new Game();
+  await game.init();
+
+  if (focusPause.isPaused()) {
+    Ticker.shared.stop();
+  }
 };

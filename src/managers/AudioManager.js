@@ -18,6 +18,9 @@ export class AudioManager {
         this.isBgmMuted = false;
         this.isSfxMuted = false;
         this.isParentMuted = false;
+        this.isPaused = false;
+        this.hasUserInteracted = false;
+        this.wantsBgm = false;
         
         // BGM Setup — "BGMM_Login.mp3" (Heroic tribal ambient, gentle for thinking)
         this.bgm = new Audio("/assest/music/BGMM_Login.mp3");
@@ -33,17 +36,24 @@ export class AudioManager {
             console.warn("Failed to create media element source", e);
         }
 
-        // Global User Interaction Listener to unblock AudioContext & play BGM
-        const unlockAudio = () => {
+        // Global User Interaction Listener to unblock AudioContext & play BGM when active
+        const activateAudio = () => {
+            this.hasUserInteracted = true;
             if (this.ctx && this.ctx.state === 'suspended') {
-                this.ctx.resume();
+                this.ctx.resume().catch(() => {});
             }
-            this.playBGM();
-            window.removeEventListener('pointerdown', unlockAudio);
-            window.removeEventListener('keydown', unlockAudio);
+            if (this.wantsBgm && !this.isBgmMuted && this.canPlayAudio()) {
+                this.bgm?.play().catch(() => {});
+            }
         };
-        window.addEventListener('pointerdown', unlockAudio);
-        window.addEventListener('keydown', unlockAudio);
+        window.addEventListener('pointerdown', activateAudio, { passive: true });
+        window.addEventListener('touchstart', activateAudio, { passive: true });
+        window.addEventListener('keydown', activateAudio, { passive: true });
+        window.addEventListener('focus', () => {
+            if (this.wantsBgm && !this.isBgmMuted && this.canPlayAudio()) {
+                this.bgm?.play().catch(() => {});
+            }
+        });
 
         // Preload SFX audio buffers for zero latency
         this.buffers = {};
@@ -53,6 +63,16 @@ export class AudioManager {
         this.loadSFXBuffer('collect', '/assest/music/ExpEarn.mp3');
         this.loadSFXBuffer('levelUp', '/assest/music/LevelUp.mp3');
         this.loadSFXBuffer('defeat', '/assest/music/CharKnockDown.mp3');
+    }
+    
+    static canPlayAudio() {
+        if (this.isParentMuted || this.isPaused) return false;
+        // In iframe (such as Wink feed preloader), defer audio until user interacts or frame gains focus
+        const inIframe = window.self !== window.top;
+        if (inIframe && !this.hasUserInteracted && !document.hasFocus()) {
+            return false;
+        }
+        return true;
     }
     
     static async loadSFXBuffer(key, url) {
@@ -67,10 +87,14 @@ export class AudioManager {
     
     static playBGM() {
         if (!this.ctx) this.init();
-        if (this.ctx && this.ctx.state === 'suspended') {
-            this.ctx.resume();
+        this.wantsBgm = true;
+        if (!this.canPlayAudio() || this.isBgmMuted) {
+            return;
         }
-        if (this.bgm && !this.isBgmMuted && !this.isParentMuted) {
+        if (this.ctx && this.ctx.state === 'suspended') {
+            this.ctx.resume().catch(() => {});
+        }
+        if (this.bgm) {
             this.bgm.play().catch(e => console.log("BGM deferred until interaction:", e));
         }
     }
@@ -102,7 +126,7 @@ export class AudioManager {
         this.sfxGain.gain.value = this.isSfxMuted || this.isParentMuted ? 0 : 0.85;
         if (this.isParentMuted) {
             this.bgm?.pause();
-        } else if (!this.isBgmMuted) {
+        } else if (this.wantsBgm && !this.isBgmMuted && this.canPlayAudio()) {
             this.playBGM();
         }
     }
@@ -114,19 +138,23 @@ export class AudioManager {
     }
 
     static async pauseForFocus() {
+        this.isPaused = true;
         if (!this.ctx) return;
         this.wasContextRunningBeforeFocus = this.ctx.state === 'running';
         this.wasBgmPlayingBeforeFocus = Boolean(this.bgm && !this.bgm.paused);
-        if (this.wasBgmPlayingBeforeFocus) this.bgm.pause();
+        if (this.bgm && !this.bgm.paused) {
+            this.bgm.pause();
+        }
         if (this.wasContextRunningBeforeFocus) await this.ctx.suspend();
     }
 
     static async resumeFromFocus() {
+        this.isPaused = false;
         if (!this.ctx) return;
         if (this.wasContextRunningBeforeFocus) await this.ctx.resume();
         this.wasContextRunningBeforeFocus = false;
-        if (this.wasBgmPlayingBeforeFocus && !this.isBgmMuted && !this.isParentMuted) {
-            await this.bgm.play().catch(() => {});
+        if (this.wantsBgm && !this.isBgmMuted && this.canPlayAudio()) {
+            await this.bgm?.play().catch(() => {});
         }
         this.wasBgmPlayingBeforeFocus = false;
     }

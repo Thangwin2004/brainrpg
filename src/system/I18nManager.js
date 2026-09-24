@@ -224,10 +224,13 @@ class I18nManager {
     return true;
   }
 
-  syncFromWink() {
-    if (this.hasLocalOverride) return false;
-    // Default is EN; player's choice is saved if changed in-game.
-    return false;
+  syncFromWink(stateOrLocale) {
+    const rawLocale =
+      typeof stateOrLocale === "object" && stateOrLocale !== null
+        ? stateOrLocale.locale
+        : stateOrLocale;
+    if (!rawLocale) return false;
+    return this.setLanguage(rawLocale, { persist: false });
   }
 
   t(key, variables = {}) {

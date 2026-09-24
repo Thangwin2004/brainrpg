@@ -1,6 +1,7 @@
 import { Container } from 'pixi.js';
 import { AudioManager } from '../managers/AudioManager.js';
 import { i18n, t } from '../system/I18nManager.js';
+import { winkGame } from '../integrations/wink/wink-adapter.js';
 
 export class SettingsModal extends Container {
   constructor(onClose, onRestart, onHome) {
@@ -9,6 +10,7 @@ export class SettingsModal extends Container {
     this.onRestart = onRestart;
     this.onHome = onHome;
     this.overlay = null;
+    this._unsubI18n = null;
 
     this.showHTMLModal();
 
@@ -150,21 +152,11 @@ export class SettingsModal extends Container {
 
         select.addEventListener('change', () => {
           AudioManager.playClickSFX();
-          i18n.setLanguage(select.value);
-          title.innerText = t('settings.title');
-          musicRow.labelElement.innerText = '🎵 ' + t('settings.music');
-          sfxRow.labelElement.innerText = '🔊 ' + t('settings.sfx');
-          label.innerText = '🌐 ' + t('settings.language');
-          select.setAttribute('aria-label', t('settings.language'));
-          select.innerHTML = `
-            <option value="en">${t('settings.english')}</option>
-            <option value="vi">${t('settings.vietnamese')}</option>
-          `;
-          select.value = i18n.currentLanguage;
-          if (versionText) versionText.innerText = t('settings.version');
-          if (closeBtn) closeBtn.setAttribute('aria-label', t('actions.cancel'));
-          if (restartBtn) restartBtn.setAttribute('aria-label', t('actions.replay'));
-          if (homeBtn) homeBtn.setAttribute('aria-label', t('actions.home'));
+          if (winkGame && typeof winkGame.setLocale === 'function') {
+            winkGame.setLocale(select.value);
+          } else {
+            i18n.setLanguage(select.value);
+          }
         });
 
         row.append(label, select);
@@ -216,6 +208,30 @@ export class SettingsModal extends Container {
     versionText.innerText = t('settings.version');
     card.appendChild(versionText);
 
+    this._unsubI18n = i18n.subscribe(() => {
+      title.innerText = t('settings.title');
+      musicRow.labelElement.innerText = '🎵 ' + t('settings.music');
+      sfxRow.labelElement.innerText = '🔊 ' + t('settings.sfx');
+      const langRow = overlay.querySelector('.game-settings-language-row');
+      if (langRow) {
+        const lbl = langRow.querySelector('.game-settings-label');
+        if (lbl) lbl.innerText = '🌐 ' + t('settings.language');
+        const sel = langRow.querySelector('.game-settings-language-select');
+        if (sel) {
+          sel.setAttribute('aria-label', t('settings.language'));
+          sel.innerHTML = `
+            <option value="en">${t('settings.english')}</option>
+            <option value="vi">${t('settings.vietnamese')}</option>
+          `;
+          sel.value = i18n.currentLanguage;
+        }
+      }
+      if (versionText) versionText.innerText = t('settings.version');
+      if (closeBtn) closeBtn.setAttribute('aria-label', t('actions.cancel'));
+      if (restartBtn) restartBtn.setAttribute('aria-label', t('actions.replay'));
+      if (homeBtn) homeBtn.setAttribute('aria-label', t('actions.home'));
+    });
+
     overlay.appendChild(card);
     const appContainer = document.getElementById('app') || document.body;
     appContainer.appendChild(overlay);
@@ -232,6 +248,10 @@ export class SettingsModal extends Container {
   }
 
   cleanup() {
+    if (this._unsubI18n) {
+      this._unsubI18n();
+      this._unsubI18n = null;
+    }
     if (this.overlay && this.overlay.parentNode) {
       this.overlay.remove();
     }
